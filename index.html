@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LEVEL UP</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23a7f3d0'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='15' fill='url(%23b)'/%3E%3Cg fill='none' stroke='url(%23g)' stroke-width='5.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18,30 32,17 46,30'/%3E%3Cpolyline points='18,46 32,33 46,46' opacity='0.55'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#04070d">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Level Up">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -1091,6 +1098,12 @@
   .rcard{padding:16px}
   .rcard .lab{font-family:var(--fhead);font-size:11px;letter-spacing:2px;color:var(--muted)}
   .rcard .val{font-size:19px;font-weight:700;margin:5px 0 11px;letter-spacing:.5px}
+  .notecard{padding:16px 18px;margin-bottom:20px;border-color:rgba(255,210,60,.4);box-shadow:0 0 24px rgba(255,177,60,.12),inset 0 0 30px rgba(255,177,60,.06)}
+  .notecard .nlabel{font-family:var(--fhead);font-size:12px;letter-spacing:2px;color:var(--amber);margin-bottom:8px}
+  .notecard .ntext{font-size:19px;font-weight:600;line-height:1.35;color:var(--ink)}
+  .notecard .nreplyrow{display:flex;gap:8px;margin-top:12px}
+  .notecard .nreplyrow input{flex:1}
+  .notecard .nsent{font-size:13px;color:var(--good);margin-top:8px;font-weight:700;letter-spacing:.5px}
   .rcard .rb{height:6px;background:rgba(2,8,14,.8);overflow:hidden;border-radius:3px}
   .rcard .rb > i{display:block;height:100%;background:linear-gradient(90deg,var(--cy),#fff);opacity:.85}
   .rcard.done{border-color:var(--good);box-shadow:0 0 24px rgba(39,255,158,.25),inset 0 0 30px rgba(39,255,158,.1)}
@@ -1259,6 +1272,7 @@
       </div>
       <div class="headstats" id="kvStats"></div>
     </div>
+    <div id="kvNote"></div>
     <div id="kvRewards"></div>
     <div class="missionwrap">
       <div class="section"><div class="sh"><span class="ico">&#9728;</span> MORNING</div><div id="kvMorning"></div></div>
@@ -1419,8 +1433,8 @@ function defaultState(){
       {id:uid(),name:'Full house clean',group:'sat',slot:'morning',points:5}
     ],
     kids:[
-      {id:uid(),name:'Ashwin',color:KID_COLORS[0],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0}},
-      {id:uid(),name:'Naveen',color:KID_COLORS[1],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0}}
+      {id:uid(),name:'Ashwin',color:KID_COLORS[0],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}},
+      {id:uid(),name:'Naveen',color:KID_COLORS[1],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}}
     ]
   };
 }
@@ -1439,7 +1453,7 @@ let state=null, currentKidId=null;
 })();
 
 function findKid(q){ return state.kids.find(k=>k.id===q) || state.kids.find(k=>slug(k.name)===slug(q)); }
-function migrate(){ state.kids.forEach(k=>{ if(!k.completions)k.completions={}; if(typeof k.points!=='number')k.points=0; if(!k.history)k.history={}; if(typeof k.lifetimeMissions!=='number')k.lifetimeMissions=0; }); if(!state.avatars)state.avatars=[];
+function migrate(){ state.kids.forEach(k=>{ if(!k.completions)k.completions={}; if(typeof k.points!=='number')k.points=0; if(!k.history)k.history={}; if(typeof k.lifetimeMissions!=='number')k.lifetimeMissions=0; if(!k.note)k.note={date:'',from:'',reply:'',seen:false}; }); if(!state.avatars)state.avatars=[];
   if(!state.messages) state.messages={ten:[...SILLY],fifty:[...SILLY_50]};
   if(!Array.isArray(state.messages.ten)||!state.messages.ten.length) state.messages.ten=[...SILLY];
   if(!Array.isArray(state.messages.fifty)||!state.messages.fifty.length) state.messages.fifty=[...SILLY_50];
@@ -1499,6 +1513,8 @@ function pruneOldCompletions(){
   // keep mission history for the last 14 days
   const cutoff=new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()-13);
   state.kids.forEach(k=>Object.keys(k.history||{}).forEach(d=>{ if(new Date(d+'T00:00:00')<cutoff) delete k.history[d]; }));
+  // daily notes clear each day
+  state.kids.forEach(k=>{ if(k.note && k.note.date!==t) k.note={date:'',from:'',reply:'',seen:false}; });
   Store.save(state);
 }
 
@@ -1559,6 +1575,7 @@ function openKid(id,fromLink){
   const k=state.kids.find(x=>x.id===id);
   if(k && !fromLink){ try{ history.replaceState(null,'','?kid='+slug(k.name)); }catch(e){} }
   renderKid();
+  if(k){ const n=kidNoteToday(k); if(n && !n.seen) showNotePopup(k); }
 }
 function renderKid(){
   const k=state.kids.find(x=>x.id===currentKidId); if(!k){ goHome(); return; }
@@ -1593,6 +1610,9 @@ function renderKid(){
     <div class="val">${esc(dr.label)}${badge}</div>
     <div class="rb"><i style="width:${dpct}%"></i></div></div>`;
 
+  // daily note from a grown-up
+  renderNoteCard(k);
+
   const tg=todayGroup(); const done=k.completions[todayStr()]||[];
   ['morning','evening'].forEach(slotName=>{
     const wrap=$(slotName==='morning'?'#kvMorning':'#kvEvening'); wrap.innerHTML='';
@@ -1626,6 +1646,29 @@ function renderSiblings(k){
       </div>`;
     }).join('');
   wrap.querySelectorAll('[data-sib]').forEach(el=>el.onclick=()=>openKid(el.dataset.sib));
+}
+function kidNoteToday(k){ return (k.note && k.note.date===todayStr() && k.note.from) ? k.note : null; }
+function renderNoteCard(k){
+  const nc=$('#kvNote'); const note=kidNoteToday(k);
+  if(!note){ nc.innerHTML=''; return; }
+  nc.innerHTML=`<div class="notecard panel brk">
+    <div class="nlabel">&#9993; MESSAGE FOR YOU</div>
+    <div class="ntext">${esc(note.from)}</div>
+    <div class="nreplyrow">
+      <input id="kvReply" type="text" placeholder="Write back…" value="${esc(note.reply||'')}">
+      <button class="btn sm" id="kvReplyBtn">SEND</button>
+    </div>
+    ${note.reply?'<div class="nsent">Reply sent &#10003;</div>':''}
+  </div>`;
+  $('#kvReplyBtn').onclick=async()=>{ k.note.reply=$('#kvReply').value.trim(); k.note.seen=true; await Store.save(state); toast('REPLY SENT'); renderNoteCard(k); };
+}
+function showNotePopup(k){
+  modal(`<h2>&#9993; MESSAGE FOR ${esc(k.name.toUpperCase())}</h2>
+    <div class="ntext" style="font-size:20px;margin:4px 0 16px">${esc(k.note.from)}</div>
+    <label>Write back</label><input id="npReply" type="text" value="${esc(k.note.reply||'')}" placeholder="Type a reply…">
+    <div class="row" style="margin-top:16px"><button class="btn grow" id="npSend">SEND &amp; CLOSE</button><button class="btn ghost" id="npSkip">CLOSE</button></div>`);
+  const finish=async(save)=>{ if(save) k.note.reply=$('#npReply').value.trim(); k.note.seen=true; await Store.save(state); closeModal(); renderKid(); };
+  $('#npSend').onclick=()=>finish(true); $('#npSkip').onclick=()=>finish(false);
 }
 function openAvatarPicker(){
   const k=state.kids.find(x=>x.id===currentKidId); if(!k) return;
@@ -1776,7 +1819,7 @@ let adminTab='chores';
 function openAdmin(){ renderAdmin(); }
 function renderAdmin(){
   modal(`<h2>ADMIN</h2>
-    <div class="tabs">${tab('chores','Chores')}${tab('rewards','Rewards')}${tab('messages','Messages')}${tab('kids','Kids & Avatars')}${tab('pin','PIN')}</div>
+    <div class="tabs">${tab('chores','Chores')}${tab('rewards','Rewards')}${tab('note','Note')}${tab('messages','Messages')}${tab('kids','Kids & Avatars')}${tab('pin','PIN')}</div>
     <div id="adminBody"></div>
     <div style="margin-top:18px;text-align:right"><button class="btn ghost sm" onclick="closeModal()">CLOSE</button></div>`);
   $('#modalRoot').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ adminTab=t.dataset.t; renderAdminBody(); $('#modalRoot').querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.t===adminTab)); });
@@ -1786,6 +1829,7 @@ function tab(id,label){ return `<button class="tab ${adminTab===id?'active':''}"
 function renderAdminBody(){ const b=$('#adminBody');
   if(adminTab==='chores')return renderChoresAdmin(b);
   if(adminTab==='rewards')return renderRewardsAdmin(b);
+  if(adminTab==='note')return renderNoteAdmin(b);
   if(adminTab==='messages')return renderMessagesAdmin(b);
   if(adminTab==='kids')return renderKidsAdmin(b);
   if(adminTab==='pin')return renderPinAdmin(b);
@@ -1892,6 +1936,26 @@ function renderRewardsAdmin(b){
     await Store.save(state); toast('REWARDS SAVED'); renderHome();
   };
 }
+function renderNoteAdmin(b){
+  const t=todayStr();
+  b.innerHTML=`<p class="hint">Leave a message for each kid for today. It pops up on their profile and they can reply. Clears automatically each day.</p>`+
+    state.kids.map(k=>{
+      const n=(k.note&&k.note.date===t)?k.note:{from:'',reply:''};
+      return `<label>${esc(k.name)} — today's message</label>
+        <textarea data-note="${k.id}" rows="2" placeholder="Hi ${esc(k.name)}! ...">${esc(n.from||'')}</textarea>
+        ${n.reply?`<div class="hint" style="margin-top:4px">&#8617; ${esc(k.name)} replied: <b style="color:var(--cy)">${esc(n.reply)}</b></div>`:''}`;
+    }).join('')+
+    `<button class="btn full" style="margin-top:14px" id="noteSave">SAVE MESSAGES</button>`;
+  $('#noteSave').onclick=async()=>{
+    state.kids.forEach(k=>{
+      const ta=$(`[data-note="${k.id}"]`); if(!ta) return;
+      const val=ta.value.trim();
+      if(!k.note||k.note.date!==t) k.note={date:t,from:'',reply:'',seen:false};
+      if(val!==k.note.from){ k.note.from=val; k.note.date=t; k.note.seen=false; } // changed -> re-pop for kid
+    });
+    await Store.save(state); toast('MESSAGES SAVED'); renderNoteAdmin($('#adminBody'));
+  };
+}
 function renderMessagesAdmin(b){
   const tenV=(state.messages.ten||[]).join('\n');
   const fiftyV=(state.messages.fifty||[]).join('\n');
@@ -1949,7 +2013,7 @@ function editKid(id){
   $('#kSave').onclick=async()=>{
     const name=$('#kName').value.trim(); if(!name){ toast('NAME REQUIRED'); return; }
     if(id){ const newPts=Math.max(0,parseInt($('#kPts').value)||0); if(newPts!==k.points && !confirm(`Set ${name}'s points to ${newPts}?`))return; Object.assign(k,{name,color:chosenColor,avatar:chosenAvatar,points:newPts}); }
-    else state.kids.push({id:uid(),name,color:chosenColor,avatar:chosenAvatar,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0}});
+    else state.kids.push({id:uid(),name,color:chosenColor,avatar:chosenAvatar,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}});
     await Store.save(state); renderAdmin(); renderHome();
   };
 }

@@ -237,7 +237,15 @@ One points total per kid (earned from chores) feeds four independent reward trac
 
 Team meters fill by the kid furthest behind (min) and only complete when every kid passes the threshold. Levels (Untrained → Legendary) are scaled to the Overarching goal. Admin "Rewards" tab now configures all four in one place (the old separate per-kid Rewards and Team tabs were merged). Resetting a kid's points also zeroes their daily/weekly/monthly meters (lifetime mission count is kept).
 
+## Daily Messaging
+
+A grown-up can leave one message per kid per day (Admin → Note tab). On the kid's profile it pops up once when they open it, and stays as a card so they can reply anytime. The reply shows back in the admin Note tab. Both the message and reply clear automatically each day. Stored in shared state (write on your phone, shows on their tablet).
+
 ## Change Log
+
+- **2026-06-18** — Added daily parent→kid messaging: per-kid note set in Admin → Note, pops up on the kid's profile + persistent reply card, reply visible to admin, auto-clears daily.
+- **2026-06-18** — Added iOS/Android home-screen icons (apple-touch-icon, manifest, 192/512 PNGs) and web-app meta tags for full-screen launch.
+- **2026-06-18** — Set up as a deployable Netlify site: netlify.toml, package.json, and a Blobs-backed function (netlify/functions/state.mjs). Storage layer switched to a shared cloud store with localStorage fallback.
 
 - **2026-06-18** — Major reward rework. Replaced the single per-kid small/main reward + 4 team rewards with: Daily reward (per kid, repeats every N pts, same-day badge), Weekly + Monthly team meters (reset on reach), Overarching team meter (never resets). Each kid now has per-meter baselines so tracks reset independently. Merged the Rewards and Team admin tabs into one. Re-based levels onto the Overarching goal. Replaced the single Team Power bar with three meters on home and profile.
 - **2026-06-18** — Added morning/evening slot-clear celebrations (fires when all chores in a time slot are completed), alongside the existing 10/50 point-threshold celebrations.

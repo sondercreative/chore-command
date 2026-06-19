@@ -1317,12 +1317,30 @@ const Store = {
     }catch(e){ /* not deployed / offline -> fall back */ }
     try{ const raw=localStorage.getItem(STORE_KEY); return raw?JSON.parse(raw):null; }catch(e){ console.error('load',e); return null; }
   },
-  async save(state){
-    // always cache locally so the app keeps working offline
+  _t:null,
+  save(state){
+    // 1) cache locally immediately (synchronous, instant) so the UI never waits
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ console.error('save',e); }
-    // push to the shared cloud store if available
-    try{ await fetch(REMOTE,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(state)}); }
-    catch(e){ if(this.remoteOK) toast('OFFLINE — SAVED LOCALLY'); }
+    // 2) push to the shared cloud store in the background, debounced so rapid taps send once
+    clearTimeout(this._t);
+    this._t=setTimeout(()=>this._push(), 300);
+    return Promise.resolve(); // resolves instantly; callers never block on the network
+  },
+  _push(){
+    try{
+      fetch(REMOTE,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(state)})
+        .then(r=>{ if(r&&r.ok) this.remoteOK=true; })
+        .catch(()=>{ if(this.remoteOK) toast('OFFLINE — SAVED LOCALLY'); });
+    }catch(e){}
+  },
+  flush(){
+    // best-effort synchronous save when the app is backgrounded/closed
+    clearTimeout(this._t);
+    try{
+      const body=JSON.stringify(state);
+      if(navigator.sendBeacon){ navigator.sendBeacon(REMOTE, new Blob([body],{type:'application/json'})); }
+      else { this._push(); }
+    }catch(e){}
   }
 };
 
@@ -1708,7 +1726,7 @@ async function toggleChore(chore,el){
     if(r.monthly.threshold>0 && minOf(x=>x.points-(x.monthlyBase||0))>=r.monthly.threshold){ teamMsg='MONTHLY GOAL! · '+r.monthly.label; kids.forEach(x=>x.monthlyBase=x.points); }
     if(r.overarching.threshold>0 && minOf(x=>x.points)>=r.overarching.threshold && !state.overReached){ teamMsg='GOAL UNLOCKED! · '+r.overarching.label; state.overReached=true; }
   }
-  await Store.save(state); renderKid();
+  renderKid(); Store.save(state);
 
   if(!checking) return;
   // one celebration, by priority: team goal > slot clear > 50 > daily reward > 10
@@ -1777,7 +1795,12 @@ function celebrate(message,big){
 function goHome(){ currentKidId=null; try{ history.replaceState(null,'',baseUrl()); }catch(e){} renderHome(); }
 
 /* ---------- Static ---------- */
-function bindStatic(){ $('#backBtn').onclick=goHome; $('#gearBtn').onclick=openAdminGate; }
+function bindStatic(){
+  $('#backBtn').onclick=goHome; $('#gearBtn').onclick=openAdminGate;
+  // make sure the last change reaches the cloud when the app is closed/backgrounded
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') Store.flush(); });
+  window.addEventListener('pagehide',()=>Store.flush());
+}
 
 /* ============================================================ ADMIN ============================================================ */
 function modal(html){

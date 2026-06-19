@@ -241,7 +241,21 @@ Team meters fill by the kid furthest behind (min) and only complete when every k
 
 A grown-up can leave one message per kid per day (Admin → Note tab). On the kid's profile it pops up once when they open it, and stays as a card so they can reply anytime. The reply shows back in the admin Note tab. Both the message and reply clear automatically each day. Stored in shared state (write on your phone, shows on their tablet).
 
+## CORE::UNLOCK Game Integration
+
+A standalone sci-fi Sokoban game (`game.html`) is unlocked through chores.
+
+- **Lifetime points**: each kid has a `lifetimePoints` counter that never resets (admin point-reset does not touch it). Every chore/special-project completion adds to it.
+- **Sectors unlock** every 10 lifetime points (`sectorsUnlocked = floor(lifetimePoints/10)`, stored as a high-water mark so they never re-lock). 20 sectors total. Crossing a threshold fires a "SECTOR X UNLOCKED — ACCESS GRANTED" popup.
+- **PLAY button** on each profile: active once at least 1 sector is unlocked (links to `game.html?kid=<slug>`), otherwise shows points-to-next-unlock.
+- **The game** reads the kid's unlocks from the shared Blob, gates the level-select grid (locked sectors show number + padlock + points needed), and writes `sectorsCompleted` back on a win. Controls: keyboard, on-screen D-pad, and swipe. Levels live in a simple text-array format in `game.html` (easy to extend).
+- **Power aura**: once a kid clears any sector, an animated electrified aura appears behind their avatar, tiered by sectors cleared (1 = amber, 5 = cyan, 10 = violet, 20 = gold).
+- **Special Project**: the aura's benefit. Any kid with an aura gets a daily bonus chore (configurable name + points in Admin → Rewards) worth extra points.
+- **SECTORS CLEARED** stat added to each profile.
+
 ## Change Log
+
+- **2026-06-18** — Integrated CORE::UNLOCK: standalone `game.html` Sokoban (20 validated levels), lifetime-points-based sector unlocks, profile PLAY button, sectors-cleared stat, tiered electrified avatar aura, and an aura-gated daily Special Project bonus chore. Lifetime points/unlocks survive admin resets.
 
 - **2026-06-18** — Added daily parent→kid messaging: per-kid note set in Admin → Note, pops up on the kid's profile + persistent reply card, reply visible to admin, auto-clears daily.
 - **2026-06-18** — Added iOS/Android home-screen icons (apple-touch-icon, manifest, 192/512 PNGs) and web-app meta tags for full-screen launch.

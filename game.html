@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>CORE::UNLOCK</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='14' fill='%23081320'/%3E%3Crect x='16' y='28' width='32' height='22' rx='3' fill='none' stroke='%2334e3ff' stroke-width='4'/%3E%3Cpath d='M22 28v-6a10 10 0 0 1 20 0' fill='none' stroke='%2334e3ff' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#04070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+  :root{
+    --bg:#050a0f; --panel:#0a1520; --border:#0d3a52; --cyan:#00d4ff; --cyan-dim:#007a99;
+    --green:#00ff88; --green-dim:#005533; --amber:#ffaa00; --red:#ff3355; --text:#8ab8cc; --text-dim:#3a6070;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative;padding:14px 10px 30px}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:100}
+  body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:620px}
+  .toprow{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
+  .header{text-align:center;flex:1}
+  .header .eyebrow{font-size:10px;letter-spacing:6px;color:var(--cyan-dim);text-transform:uppercase;margin-bottom:4px}
+  .header h1{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,0.6),0 0 60px rgba(0,212,255,0.2);letter-spacing:4px}
+  .header .subtitle{font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-top:3px}
+  .header .subtitle b{color:var(--cyan)}
+  .header .subtitle .guest{color:var(--amber)}
+  .statusbar{display:flex;gap:14px;align-items:center;font-size:11px;letter-spacing:2px;color:var(--text-dim);border:1px solid var(--border);padding:6px 16px;background:var(--panel);width:100%;justify-content:space-between}
+  .statusbar .stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .statusbar .stat-label{font-size:9px;color:var(--text-dim);letter-spacing:2px}
+  .statusbar .stat-value{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--cyan);text-shadow:0 0 10px rgba(0,212,255,0.5)}
+  .statusbar .stat-value.green{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,0.5)}
+  .progress-wrap{width:100%;display:flex;flex-direction:column;gap:4px}
+  .progress-label{font-size:9px;letter-spacing:3px;color:var(--text-dim);display:flex;justify-content:space-between}
+  .progress-bar{height:6px;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));box-shadow:0 0 10px rgba(0,212,255,0.8);transition:width 0.4s ease}
+  .board-wrap{border:1px solid var(--border);box-shadow:0 0 0 1px rgba(0,212,255,0.1),0 0 40px rgba(0,212,255,0.05),inset 0 0 40px rgba(0,0,0,0.5);background:var(--panel);padding:12px;position:relative;max-width:100%;overflow:auto}
+  .board-wrap::before{content:'ENCRYPTION NODE';position:absolute;top:-1px;left:12px;font-size:8px;letter-spacing:3px;color:var(--cyan-dim);background:var(--panel);padding:0 6px;transform:translateY(-50%)}
+  .board-wrap::after{content:attr(data-status);position:absolute;bottom:-1px;right:12px;font-size:8px;letter-spacing:2px;color:var(--text-dim);background:var(--panel);padding:0 6px;transform:translateY(50%)}
+  canvas#gameCanvas{display:block}
+  .log{font-size:9px;letter-spacing:1px;color:var(--text-dim);text-align:center;min-height:14px;transition:color 0.3s}
+  .log.success{color:var(--green)} .log.warn{color:var(--amber)}
+  .sectors{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:100%}
+  .dot{min-width:24px;height:24px;padding:0 5px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .dot:hover{border-color:var(--cyan);color:var(--cyan)}
+  .dot.active{background:var(--cyan);color:#021018;border-color:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,0.8)}
+  .dot.complete{border-color:var(--green);color:var(--green)}
+  .dot.complete.active{background:var(--green);color:#012}
+  .dot.locked{opacity:.35;cursor:not-allowed;color:var(--text-dim)}
+  .dot.locked:hover{border-color:var(--border);color:var(--text-dim)}
+  .controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 16px;background:transparent;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;text-transform:uppercase;transition:all 0.15s;text-decoration:none;display:inline-block}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(0,212,255,0.2)}
+  .btn.primary{border-color:var(--cyan-dim);color:var(--cyan)}
+  .arrow-pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+  .arrow-btn{background:var(--panel);border:1px solid var(--border);color:var(--cyan-dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;user-select:none}
+  .arrow-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .arrow-btn:active,.arrow-btn.active{background:rgba(0,212,255,0.15);border-color:var(--cyan)}
+  .arrow-btn.empty{opacity:0;pointer-events:none}
+  .win-overlay{position:fixed;inset:0;background:rgba(0,5,10,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.4s;padding:20px}
+  .win-overlay.show{opacity:1;pointer-events:all}
+  .win-box{border:1px solid var(--green);background:var(--panel);padding:34px 44px;text-align:center;box-shadow:0 0 60px rgba(0,255,136,0.2),inset 0 0 40px rgba(0,255,136,0.05);position:relative;max-width:100%}
+  .win-title{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;color:var(--green);text-shadow:0 0 30px rgba(0,255,136,0.8);letter-spacing:6px;margin-bottom:8px;animation:pg 1s ease-in-out infinite}
+  @keyframes pg{0%,100%{text-shadow:0 0 20px rgba(0,255,136,0.6)}50%{text-shadow:0 0 50px rgba(0,255,136,1),0 0 100px rgba(0,255,136,0.4)}}
+  .win-sub{font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-bottom:18px}
+  .win-stats{font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:24px;line-height:2;white-space:pre-line}
+  .win-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  #particles{position:fixed;inset:0;pointer-events:none;z-index:150}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="container">
+  <div class="toprow">
+    <a class="btn" id="backLink" href="index.html">&#9664; EXIT</a>
+    <div class="header">
+      <div class="eyebrow">CLASSIFIED // ACCESS PROTOCOL</div>
+      <h1>CORE::UNLOCK</h1>
+      <div class="subtitle" id="subtitle">PUSH ALL DATA CORES TO THE ENCRYPTION NODES</div>
+    </div>
+    <span style="width:64px"></span>
+  </div>
+
+  <div class="statusbar">
+    <div class="stat"><div class="stat-label">SECTOR</div><div class="stat-value" id="level-display">01</div></div>
+    <div class="stat"><div class="stat-label">MOVES</div><div class="stat-value" id="moves-display">000</div></div>
+    <div class="stat"><div class="stat-label">CORES LOCKED</div><div class="stat-value green" id="locked-display">0/0</div></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label"><span>DECRYPTION PROGRESS</span><span id="pct-label">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="board-wrap" id="board-wrap" data-status="AWAITING INPUT"><canvas id="gameCanvas"></canvas></div>
+  <div class="log" id="log">[ OPERATIVE STANDING BY — ARROW KEYS, D-PAD, OR SWIPE ]</div>
+
+  <div class="sectors" id="sectors"></div>
+
+  <div class="controls">
+    <div class="arrow-pad">
+      <div class="arrow-btn empty"></div><div class="arrow-btn" id="btn-up" onclick="move(0,-1)">&#9650;</div><div class="arrow-btn empty"></div>
+      <div class="arrow-btn" id="btn-left" onclick="move(-1,0)">&#9664;</div><div class="arrow-btn empty"></div><div class="arrow-btn" id="btn-right" onclick="move(1,0)">&#9654;</div>
+      <div class="arrow-btn empty"></div><div class="arrow-btn" id="btn-down" onclick="move(0,1)">&#9660;</div><div class="arrow-btn empty"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn primary" onclick="resetLevel()">[ RESET ]</button>
+      <button class="btn" onclick="undoMove()">[ UNDO ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-box">
+    <div class="win-title">DECRYPTED</div>
+    <div class="win-sub">ENCRYPTION NODE COMPROMISED — SECTOR CLEAR</div>
+    <div class="win-stats" id="win-stats"></div>
+    <div class="win-btns">
+      <button class="btn primary" id="win-next" onclick="nextLevel()" style="font-size:12px;padding:12px 28px;letter-spacing:3px">NEXT SECTOR &#9654;</button>
+      <button class="btn" onclick="closeWin()" style="font-size:12px;padding:12px 28px;letter-spacing:3px">SECTORS</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Legend: # wall, . floor, @ player, $ core, * core on node, + player on node, X node(target)
+const LEVELS = [["#######","#.....#","#.@$X.#","#.....#","#######"],["#######","#X..#.#","#.$@..#","#...$.#","#.X...#","#######"],["########","#......#","#.$..X.#","#.#$#..#","#..X.@.#","#......#","########"],["########","#@.....#","#.$$X..#","#..#X..#","#......#","########"],["########","#..#...#","#.$.$..#","#.XX#..#","#..@...#","########"],["#########","#X..#..X#","#.$...$.#","#...@...#","#.......#","#########"],["########","#......#","#.XX$..#","#.$#...#","#.@.$X.#","#....X.#","########"],["#########","#.......#","#.$$$...#","#.XXX.#.#","#....@..#","#########"],["########","#..X...#","#.#$#..#","#.X$X..#","#.#$#..#","#..@...#","########"],["#########","#@......#","#.$#$#$.#","#.X.X.X.#","#.......#","#########"],["########","#......#","#.$..$.#","#.X##X.#","#.$..@.#","#.X....#","########"],["#########","#...#...#","#.$.X.$.#","#.X.@.X.#","#.$...$.#","#...X...#","#########"],["##########","#........#","#.$$$$...#","#.XXXX.#.#","#....@...#","##########"],["########","#X...X.#","#.$$$..#","#.$....#","#.X.@..#","#X.....#","########"],["#########","#..X.X..#","#.#$#$#.#","#..$.$..#","#..XX...#","#...@...#","#########"],["##########","#@.......#","#.$.$.$..#","#.X.X.X..#","#.$.....+#","#.X......#","##########"],["#########","#...#...#","#.$$.$$.#","#.X..X..#","#.X..X..#","#...@...#","#########"],["##########","#....#...#","#.$$.X.X.#","#.X#.$.#.#","#..@.$...#","#....X...#","##########"],["##########","#........#","#.$.$.$..#","#.X.X.X..#","#.$......#","#.X...@..#","##########"],["##########","#........#","#.$$$$...#","#.XXXX...#","#...@....#","#........#","##########"]];
+const TOTAL = LEVELS.length;
+const PTS_PER_SECTOR = 10;
+const WALL='#',FLOOR='.',PLAYER='@',CRATE='$',TARGET='X',CRATE_ON='*',PLAYER_ON='+';
+let TILE = 46;
+
+/* ---------- shared storage (same Blob as the chore app) ---------- */
+const STORE_KEY='levelup_state_v1', REMOTE='/.netlify/functions/state';
+const LOCAL = location.protocol==='file:';
+function slug(s){ return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+function fetchT(u,o,ms=3000){ return Promise.race([fetch(u,o),new Promise((_,r)=>setTimeout(()=>r(0),ms))]); }
+function readLocal(){ try{ const raw=localStorage.getItem(STORE_KEY); return {data:raw?JSON.parse(raw):null,remote:false}; }catch(e){ return {data:null,remote:false}; } }
+async function fetchState(){ if(LOCAL) return readLocal();
+  try{ const r=await fetchT(REMOTE,{cache:'no-store'}); if(r&&r.ok){ const d=await r.json(); if(d){ try{localStorage.setItem(STORE_KEY,JSON.stringify(d));}catch(_){} return {data:d,remote:true}; } return {data:null,remote:true}; } }catch(e){}
+  return readLocal(); }
+function findKid(st,q){ if(!st||!st.kids)return null; return st.kids.find(k=>k.id===q)||st.kids.find(k=>slug(k.name)===slug(q)); }
+
+/* ---------- state ---------- */
+let STATE=null, REMOTE_OK=false, KID=null, KIDQ=new URLSearchParams(location.search).get('kid');
+let unlocked=TOTAL, completed=new Set(), GUEST=true;
+let currentLevel=0, grid=[], playerPos={x:0,y:0}, moveCount=0, history=[], particles=[];
+
+const $=id=>document.getElementById(id);
+
+(async function init(){
+  const {data,remote}=await fetchState(); STATE=data; REMOTE_OK=remote;
+  if(KIDQ && STATE) KID=findKid(STATE,KIDQ);
+  if(KID){
+    GUEST=false;
+    $('backLink').href='index.html?kid='+slug(KID.name);
+    unlocked=Math.max(0, KID.sectorsUnlocked||0);
+    completed=new Set(KID.sectorsCompleted||[]);
+    $('subtitle').innerHTML='OPERATIVE <b>'+esc(KID.name.toUpperCase())+'</b> · '+Math.min(unlocked,TOTAL)+'/'+TOTAL+' SECTORS UNLOCKED';
+  } else {
+    GUEST=true; unlocked=TOTAL; completed=new Set();
+    $('subtitle').innerHTML='<span class="guest">GUEST MODE — progress won’t be saved. Open from your profile.</span>';
+  }
+  // first playable = lowest unlocked, uncompleted (else first unlocked, else 0)
+  let startIdx=0;
+  if(!GUEST){
+    startIdx=-1;
+    for(let i=0;i<Math.min(unlocked,TOTAL);i++){ if(!completed.has(i)){ startIdx=i; break; } }
+    if(startIdx<0) startIdx=Math.max(0,Math.min(unlocked,TOTAL)-1);
+  }
+  buildDots(); loadLevel(startIdx); gameLoop(); animParticles();
+  window.addEventListener('resize',()=>{ if(grid.length){ resizeCanvas(); } });
+})();
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function isLocked(i){ return !GUEST && i>=unlocked; }
+
+/* ---------- level ---------- */
+function loadLevel(idx){
+  if(isLocked(idx)){ setLog('[ SECTOR '+String(idx+1).padStart(2,'0')+' LOCKED — '+((idx+1)*PTS_PER_SECTOR)+' LIFETIME PTS NEEDED ]','warn'); return; }
+  currentLevel=idx; grid=LEVELS[idx].map(r=>r.split('')); history=[]; moveCount=0;
+  for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===PLAYER||grid[y][x]===PLAYER_ON) playerPos={x,y}; }
+  resizeCanvas(); updateUI(); buildDots();
+  setLog('[ SECTOR '+String(idx+1).padStart(2,'0')+' — OPERATIVE DEPLOYED ]','');
+  $('board-wrap').setAttribute('data-status','ACTIVE');
+  $('win-overlay').classList.remove('show');
+}
+function resizeCanvas(){
+  const rows=grid.length, cols=grid[0].length;
+  TILE=Math.max(28, Math.min(46, Math.floor(Math.min(window.innerWidth-60, 560)/cols)));
+  const c=$('gameCanvas'); c.width=cols*TILE; c.height=rows*TILE; draw();
+}
+
+/* ---------- drawing ---------- */
+function draw(){
+  const c=$('gameCanvas'),ctx=c.getContext('2d'),rows=grid.length,cols=grid[0].length;
+  ctx.fillStyle='#050a0f'; ctx.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const cell=grid[y][x],px=x*TILE,py=y*TILE;
+    if(cell===WALL){ drawWall(ctx,px,py); }
+    else{ drawFloor(ctx,px,py);
+      if(cell===TARGET||cell===PLAYER_ON) drawTarget(ctx,px,py);
+      if(cell===CRATE) drawCrate(ctx,px,py,false);
+      if(cell===CRATE_ON) drawCrate(ctx,px,py,true);
+      if(cell===PLAYER||cell===PLAYER_ON) drawPlayer(ctx,px,py);
+    }
+  }
+  ctx.strokeStyle='rgba(0,212,255,0.04)'; ctx.lineWidth=1;
+  for(let y=0;y<=rows;y++){ ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(cols*TILE,y*TILE); ctx.stroke(); }
+  for(let x=0;x<=cols;x++){ ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,rows*TILE); ctx.stroke(); }
+}
+function drawWall(ctx,x,y){ ctx.fillStyle='#0a1a28'; ctx.fillRect(x,y,TILE,TILE);
+  ctx.strokeStyle='rgba(0,212,255,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+  ctx.fillStyle='rgba(0,212,255,0.06)'; ctx.fillRect(x+6,y+6,TILE-12,TILE-12);
+  ctx.fillStyle='rgba(0,212,255,0.3)'; [[4,4],[TILE-8,4],[4,TILE-8],[TILE-8,TILE-8]].forEach(([dx,dy])=>ctx.fillRect(x+dx,y+dy,3,3)); }
+function drawFloor(ctx,x,y){ ctx.fillStyle='#070f18'; ctx.fillRect(x,y,TILE,TILE); }
+function drawTarget(ctx,x,y){ const cx=x+TILE/2,cy=y+TILE/2;
+  ctx.strokeStyle='rgba(0,255,136,0.4)'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(cx,cy,TILE*0.33,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(0,255,136,0.6)'; ctx.beginPath(); ctx.moveTo(cx,cy-8); ctx.lineTo(cx+8,cy); ctx.lineTo(cx,cy+8); ctx.lineTo(cx-8,cy); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='rgba(0,255,136,0.5)'; ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fill(); }
+function drawCrate(ctx,x,y,locked){ const color=locked?'#00ff88':'#ffaa00',glow=locked?'rgba(0,255,136,':'rgba(255,170,0,',pad=6;
+  ctx.fillStyle=locked?'rgba(0,255,136,0.1)':'rgba(255,170,0,0.08)'; ctx.fillRect(x+pad,y+pad,TILE-pad*2,TILE-pad*2);
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.strokeRect(x+pad,y+pad,TILE-pad*2,TILE-pad*2);
+  const ip=pad+5; ctx.strokeStyle=glow+'0.4)'; ctx.lineWidth=1; ctx.strokeRect(x+ip,y+ip,TILE-ip*2,TILE-ip*2);
+  ctx.beginPath();
+  ctx.moveTo(x+pad,y+pad); ctx.lineTo(x+pad+8,y+pad+8);
+  ctx.moveTo(x+TILE-pad,y+pad); ctx.lineTo(x+TILE-pad-8,y+pad+8);
+  ctx.moveTo(x+pad,y+TILE-pad); ctx.lineTo(x+pad+8,y+TILE-pad-8);
+  ctx.moveTo(x+TILE-pad,y+TILE-pad); ctx.lineTo(x+TILE-pad-8,y+TILE-pad-8); ctx.stroke();
+  ctx.fillStyle=color; ctx.font='bold 8px "Share Tech Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(locked?'LOCKED':'CORE',x+TILE/2,y+TILE/2);
+  if(locked){ ctx.shadowColor='#00ff88'; ctx.shadowBlur=12; ctx.strokeStyle='rgba(0,255,136,0.3)'; ctx.strokeRect(x+pad,y+pad,TILE-pad*2,TILE-pad*2); ctx.shadowBlur=0; } }
+function drawPlayer(ctx,x,y){ const cx=x+TILE/2,cy=y+TILE/2,t=Date.now()/600;
+  ctx.strokeStyle=`rgba(0,212,255,${0.2+0.1*Math.sin(t)})`; ctx.lineWidth=1; ctx.setLineDash([3,5]); ctx.beginPath(); ctx.arc(cx,cy,18+2*Math.sin(t),0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,212,255,0.15)'; ctx.strokeStyle='#00d4ff'; ctx.lineWidth=1.5; hex(ctx,cx,cy,14); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='rgba(0,212,255,0.3)'; hex(ctx,cx,cy,7); ctx.fill();
+  ctx.fillStyle='#00d4ff'; ctx.shadowColor='#00d4ff'; ctx.shadowBlur=10; ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(0,212,255,0.4)'; ctx.lineWidth=1;
+  for(let i=0;i<4;i++){ const a=i*Math.PI/2+t*0.3; ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*10,cy+Math.sin(a)*10); ctx.lineTo(cx+Math.cos(a)*16,cy+Math.sin(a)*16); ctx.stroke(); } }
+function hex(ctx,cx,cy,r){ ctx.beginPath(); for(let i=0;i<6;i++){ const a=Math.PI/6+i*Math.PI/3,px=cx+r*Math.cos(a),py=cy+r*Math.sin(a); i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); } ctx.closePath(); }
+
+/* ---------- movement ---------- */
+function move(dx,dy){
+  if($('win-overlay').classList.contains('show')) return;
+  const nx=playerPos.x+dx, ny=playerPos.y+dy, rows=grid.length, cols=grid[0].length;
+  if(ny<0||ny>=rows||nx<0||nx>=cols) return;
+  const target=grid[ny][nx]; if(target===WALL) return;
+  const snap=grid.map(r=>[...r]);
+  if(target===CRATE||target===CRATE_ON){
+    const bx=nx+dx,by=ny+dy; if(by<0||by>=rows||bx<0||bx>=cols) return;
+    const beyond=grid[by][bx]; if(beyond===WALL||beyond===CRATE||beyond===CRATE_ON) return;
+    const wasOn=target===CRATE_ON; grid[by][bx]=beyond===TARGET?CRATE_ON:CRATE; grid[ny][nx]=wasOn?TARGET:FLOOR;
+    if(grid[by][bx]===CRATE_ON) spawnLock(bx,by);
+  }
+  const wasOn=grid[playerPos.y][playerPos.x]===PLAYER_ON;
+  grid[playerPos.y][playerPos.x]=wasOn?TARGET:FLOOR;
+  grid[ny][nx]=(grid[ny][nx]===TARGET)?PLAYER_ON:PLAYER;
+  playerPos={x:nx,y:ny}; history.push({grid:snap}); moveCount++;
+  draw(); updateUI();
+  if(checkWin()) setTimeout(showWin,380);
+}
+function undoMove(){ if(!history.length) return; grid=history.pop().grid.map(r=>[...r]);
+  for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===PLAYER||grid[y][x]===PLAYER_ON) playerPos={x,y}; }
+  draw(); updateUI(); setLog('[ MOVE REVERSED ]','warn'); }
+function checkWin(){ for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===CRATE) return false; } return true; }
+
+/* ---------- UI ---------- */
+function updateUI(){
+  $('level-display').textContent=String(currentLevel+1).padStart(2,'0');
+  $('moves-display').textContent=String(moveCount).padStart(3,'0');
+  let total=0,locked=0;
+  for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ const c=grid[y][x]; if(c===CRATE||c===CRATE_ON)total++; if(c===CRATE_ON)locked++; }
+  $('locked-display').textContent=locked+'/'+total;
+  const pct=total===0?0:Math.round(locked/total*100);
+  $('progress-fill').style.width=pct+'%'; $('pct-label').textContent=pct+'%';
+}
+function setLog(m,t){ const e=$('log'); e.textContent=m; e.className='log '+(t||''); }
+function buildDots(){ const w=$('sectors'); w.innerHTML='';
+  for(let i=0;i<TOTAL;i++){ const d=document.createElement('div');
+    const locked=isLocked(i), done=completed.has(i);
+    d.className='dot'+(i===currentLevel?' active':'')+(done?' complete':'')+(locked?' locked':'');
+    d.textContent=String(i+1);
+    d.title='Sector '+(i+1)+(locked?' (locked)':done?' (cleared)':'');
+    d.onclick=()=>{ if(locked) setLog('[ SECTOR '+String(i+1).padStart(2,'0')+' LOCKED — '+((i+1)*PTS_PER_SECTOR)+' PTS ]','warn'); else loadLevel(i); };
+    w.appendChild(d);
+  }
+}
+function resetLevel(){ loadLevel(currentLevel); setLog('[ SECTOR RESET — REDEPLOYING ]','warn'); }
+function closeWin(){ $('win-overlay').classList.remove('show'); }
+function nextLevel(){ const n=currentLevel+1;
+  if(n<TOTAL && !isLocked(n)){ loadLevel(n); }
+  else if(n<TOTAL && isLocked(n)){ closeWin(); setLog('[ NEXT SECTOR LOCKED — EARN MORE POINTS ]','warn'); }
+  else { closeWin(); setLog('[ ALL UNLOCKED SECTORS DECRYPTED ]','success'); }
+}
+function showWin(){
+  const justNew = !completed.has(currentLevel);
+  completed.add(currentLevel); buildDots();
+  $('win-stats').textContent='MOVES LOGGED: '+moveCount+'\nSECTOR: '+String(currentLevel+1).padStart(2,'0')+' / '+String(TOTAL).padStart(2,'0');
+  const n=currentLevel+1; $('win-next').style.display=(n<TOTAL && !isLocked(n))?'':'none';
+  $('win-overlay').classList.add('show'); $('board-wrap').setAttribute('data-status','DECRYPTED');
+  launchParticles();
+  if(!GUEST && justNew) saveCompletion(currentLevel);
+}
+async function saveCompletion(i){
+  let base=STATE;
+  if(REMOTE_OK){ try{ const r=await fetchT(REMOTE,{cache:'no-store'}); if(r&&r.ok){ const d=await r.json(); if(d) base=d; } }catch(e){} }
+  if(!base||!base.kids) base=STATE;
+  if(!base) return;
+  const k=findKid(base,KID.id)||findKid(base,KID.name);
+  if(k){ const set=new Set(k.sectorsCompleted||[]); set.add(i); k.sectorsCompleted=[...set].sort((a,b)=>a-b); k.hasCompletedLevel=true;
+    STATE=base; try{ localStorage.setItem(STORE_KEY,JSON.stringify(base)); }catch(e){}
+    if(REMOTE_OK){ try{ await fetch(REMOTE,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(base)}); }catch(e){} } }
+}
+
+/* ---------- particles ---------- */
+function spawnLock(gx,gy){ const c=$('gameCanvas'),r=c.getBoundingClientRect(),cx=r.left+(gx+0.5)*TILE,cy=r.top+(gy+0.5)*TILE;
+  for(let i=0;i<12;i++) particles.push({x:cx,y:cy,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,life:1,color:'#00ff88',size:2+Math.random()*3}); }
+function launchParticles(){ const cols=['#00d4ff','#00ff88','#ffaa00','#ff3355','#ffffff'];
+  for(let i=0;i<120;i++) particles.push({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-0.5)*12,vy:(Math.random()-0.5)*12-4,life:1,color:cols[Math.floor(Math.random()*cols.length)],size:3+Math.random()*5}); }
+function animParticles(){ const c=$('particles'),ctx=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight; ctx.clearRect(0,0,c.width,c.height);
+  particles=particles.filter(p=>p.life>0); particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life-=0.02; ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=6; ctx.fillRect(p.x,p.y,p.size,p.size); });
+  ctx.globalAlpha=1; ctx.shadowBlur=0; requestAnimationFrame(animParticles); }
+function gameLoop(){ if(grid.length) draw(); requestAnimationFrame(gameLoop); }
+
+/* ---------- input ---------- */
+const keyMap={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],W:[0,-1],S:[0,1],A:[-1,0],D:[1,0]};
+const btnMap={ArrowUp:'btn-up',ArrowDown:'btn-down',ArrowLeft:'btn-left',ArrowRight:'btn-right',w:'btn-up',s:'btn-down',a:'btn-left',d:'btn-right'};
+document.addEventListener('keydown',e=>{ if(keyMap[e.key]){ e.preventDefault(); move(...keyMap[e.key]); const b=$(btnMap[e.key]); if(b)b.classList.add('active'); }
+  if(e.key==='z'||e.key==='Z') undoMove(); if(e.key==='r'||e.key==='R') resetLevel(); });
+document.addEventListener('keyup',e=>{ const b=$(btnMap[e.key]); if(b)b.classList.remove('active'); });
+let ts=null;
+const bw=$('board-wrap');
+bw.addEventListener('touchstart',e=>{ ts=e.touches[0]; },{passive:true});
+bw.addEventListener('touchend',e=>{ if(!ts)return; const dx=e.changedTouches[0].clientX-ts.clientX,dy=e.changedTouches[0].clientY-ts.clientY;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20){ts=null;return;} if(Math.abs(dx)>Math.abs(dy)) move(dx>0?1:-1,0); else move(0,dy>0?1:-1); ts=null; },{passive:true});
+</script>
+</body>
+</html>

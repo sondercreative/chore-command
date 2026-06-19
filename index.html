@@ -1141,6 +1141,32 @@
   @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1)}}
   .empty{color:var(--muted);font-weight:600;letter-spacing:1px;padding:12px 4px;font-style:italic}
 
+  /* power aura behind avatars (tiered by sectors cleared) */
+  .av.aura{animation:auraPulse 1.4s ease-in-out infinite}
+  .av.aura-t2{animation-duration:1.1s}
+  .av.aura-t3{animation-duration:.9s}
+  .av.aura-t4{animation-duration:.7s}
+  @keyframes auraPulse{
+    0%,100%{filter:drop-shadow(0 0 5px var(--ac)) drop-shadow(0 0 12px var(--ac))}
+    50%{filter:drop-shadow(0 0 11px var(--ac)) drop-shadow(0 0 24px var(--ac))}
+  }
+
+  /* CORE::UNLOCK play button */
+  .playbtn{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:#021018;margin-bottom:18px;padding:16px;text-align:center;
+    background:linear-gradient(120deg,#34e3ff,#27ff9e);font-family:var(--fhead);
+    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);box-shadow:0 0 24px rgba(52,227,255,.35);transition:filter .2s,transform .12s}
+  .playbtn:hover{filter:brightness(1.08) drop-shadow(0 0 10px var(--cy))}
+  .playbtn:active{transform:scale(.99)}
+  .playbtn .pbig{font-size:22px;font-weight:900;letter-spacing:2px}
+  .playbtn .psub{font-size:11px;font-weight:700;letter-spacing:1px;color:#06303a}
+  .playbtn.locked{background:var(--panel2);border:1px solid var(--line-soft);box-shadow:none;cursor:default}
+  .playbtn.locked .pbig,.playbtn.locked .psub{color:var(--muted)}
+
+  /* special project chore accent */
+  .chore.special .box{border-color:var(--amber)}
+  .chore.special .cpts{color:var(--amber);border-color:rgba(255,177,60,.4)}
+  .chore.special.done .box{background:var(--good);border-color:var(--good);color:#012}
+
   /* ---------- Celebration ---------- */
   #celebrate{position:fixed;inset:0;display:grid;place-items:center;z-index:70;pointer-events:none;opacity:1;transition:opacity .5s ease}
   #celebrate.out{opacity:0}
@@ -1281,8 +1307,10 @@
       <div class="headstats" id="kvStats"></div>
     </div>
     <div id="kvNote"></div>
+    <div id="kvPlay"></div>
     <div id="kvRewards"></div>
     <div class="missionwrap">
+      <div id="kvSpecial"></div>
       <div class="section"><div class="sh"><span class="ico">&#9728;</span> MORNING</div><div id="kvMorning"></div></div>
       <div class="section"><div class="sh"><span class="ico">&#9789;</span> EVENING</div><div id="kvEvening"></div></div>
     </div>
@@ -1312,17 +1340,20 @@ const REMOTE = '/.netlify/functions/state'; // Netlify Blobs-backed shared store
 // Hybrid store: shared Netlify Blob when deployed, localStorage as cache + offline/local fallback.
 const Store = {
   remoteOK:false,
+  _local:location.protocol==='file:', // opened as a local file -> no backend
   async load(){
-    // try the shared cloud store first
-    try{
-      const r=await fetch(REMOTE,{cache:'no-store'});
-      if(r.ok){
-        this.remoteOK=true;
-        const data=await r.json();              // null when nothing stored yet
-        if(data){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(data)); }catch(_){} return data; }
-        return null;
-      }
-    }catch(e){ /* not deployed / offline -> fall back */ }
+    // skip the network entirely on local file:// (it can hang/blank otherwise)
+    if(!this._local){
+      try{
+        const r=await Promise.race([fetch(REMOTE,{cache:'no-store'}), new Promise((_,rej)=>setTimeout(()=>rej(0),3000))]);
+        if(r&&r.ok){
+          this.remoteOK=true;
+          const data=await r.json();            // null when nothing stored yet
+          if(data){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(data)); }catch(_){} return data; }
+          return null;
+        }
+      }catch(e){ /* not deployed / offline -> fall back */ }
+    }
     try{ const raw=localStorage.getItem(STORE_KEY); return raw?JSON.parse(raw):null; }catch(e){ console.error('load',e); return null; }
   },
   _t:null,
@@ -1335,6 +1366,7 @@ const Store = {
     return Promise.resolve(); // resolves instantly; callers never block on the network
   },
   _push(){
+    if(this._local) return; // local file: localStorage only
     try{
       fetch(REMOTE,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(state)})
         .then(r=>{ if(r&&r.ok) this.remoteOK=true; })
@@ -1344,6 +1376,7 @@ const Store = {
   flush(){
     // best-effort synchronous save when the app is backgrounded/closed
     clearTimeout(this._t);
+    if(this._local) return;
     try{
       const body=JSON.stringify(state);
       if(navigator.sendBeacon){ navigator.sendBeacon(REMOTE, new Blob([body],{type:'application/json'})); }
@@ -1365,6 +1398,8 @@ function baseUrl(){ return location.origin==='null' ? location.href.split('?')[0
 function linkFor(k){ return baseUrl()+'?kid='+slug(k.name); }
 
 const KID_COLORS = ['#34e3ff','#ff3ea5','#ffd23c','#27ff9e','#a78bfa','#ff7a3c','#5aa9ff','#ff6b6b'];
+const PTS_PER_SECTOR = 10; // CORE::UNLOCK: lifetime points per game sector
+const GAME_SECTORS = 20;
 
 const SILLY = [
   "YOU ARE A CHORE LEGEND","THE DISHES FEAR YOU","SOCKS: DEFEATED","CLEANLINESS LEVEL: BOSS",
@@ -1449,7 +1484,8 @@ function defaultState(){
       daily:{interval:20,label:'30 min screen time'},
       weekly:{threshold:100,label:'Friday movie night'},
       monthly:{threshold:300,label:'Day trip out'},
-      overarching:{threshold:1000,label:'Big family reward'}
+      overarching:{threshold:1000,label:'Big family reward'},
+      special:{name:'Special Project',points:5}
     },
     chores:[
       {id:uid(),name:'Brush teeth',group:'everyday',slot:'morning',points:1},
@@ -1459,8 +1495,8 @@ function defaultState(){
       {id:uid(),name:'Full house clean',group:'sat',slot:'morning',points:5}
     ],
     kids:[
-      {id:uid(),name:'Ashwin',color:KID_COLORS[0],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}},
-      {id:uid(),name:'Naveen',color:KID_COLORS[1],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}}
+      {id:uid(),name:'Ashwin',color:KID_COLORS[0],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false},lifetimePoints:0,sectorsUnlocked:0,sectorsCompleted:[],hasCompletedLevel:false},
+      {id:uid(),name:'Naveen',color:KID_COLORS[1],avatar:null,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false},lifetimePoints:0,sectorsUnlocked:0,sectorsCompleted:[],hasCompletedLevel:false}
     ]
   };
 }
@@ -1479,7 +1515,12 @@ let state=null, currentKidId=null;
 })();
 
 function findKid(q){ return state.kids.find(k=>k.id===q) || state.kids.find(k=>slug(k.name)===slug(q)); }
-function migrate(){ state.kids.forEach(k=>{ if(!k.completions)k.completions={}; if(typeof k.points!=='number')k.points=0; if(!k.history)k.history={}; if(typeof k.lifetimeMissions!=='number')k.lifetimeMissions=0; if(!k.note)k.note={date:'',from:'',reply:'',seen:false}; }); if(!state.avatars)state.avatars=[];
+function migrate(){ state.kids.forEach(k=>{ if(!k.completions)k.completions={}; if(typeof k.points!=='number')k.points=0; if(!k.history)k.history={}; if(typeof k.lifetimeMissions!=='number')k.lifetimeMissions=0; if(!k.note)k.note={date:'',from:'',reply:'',seen:false};
+    if(typeof k.lifetimePoints!=='number')k.lifetimePoints=k.points||0;
+    if(typeof k.sectorsUnlocked!=='number')k.sectorsUnlocked=Math.floor((k.lifetimePoints||0)/10);
+    if(!Array.isArray(k.sectorsCompleted))k.sectorsCompleted=[];
+    if(typeof k.hasCompletedLevel!=='boolean')k.hasCompletedLevel=k.sectorsCompleted.length>0;
+  }); if(!state.avatars)state.avatars=[];
   if(!state.messages) state.messages={ten:[...SILLY],fifty:[...SILLY_50]};
   if(!Array.isArray(state.messages.ten)||!state.messages.ten.length) state.messages.ten=[...SILLY];
   if(!Array.isArray(state.messages.fifty)||!state.messages.fifty.length) state.messages.fifty=[...SILLY_50];
@@ -1499,6 +1540,7 @@ function migrateRewards(){
     };
     delete state.familyRewards;
   }
+  if(!state.rewards.special) state.rewards.special={name:'Special Project',points:5};
   // per-kid meter baselines + daily tracker (start meters at current points so they don't insta-complete)
   state.kids.forEach(k=>{
     if(typeof k.weeklyBase!=='number') k.weeklyBase=k.points;
@@ -1553,7 +1595,7 @@ function renderHome(){
     const card=document.createElement('button');
     card.className='kidcard panel brk'; card.style.setProperty('--kc',k.color);
     card.innerHTML=`
-      <div class="av">${avatarInner(k)}</div>
+      <div class="av ${auraClass(k)}" style="--ac:${auraInfo(k).color}">${avatarInner(k)}</div>
       <div class="nm">${esc(k.name)}</div>
       <div class="cardlv" style="--lc:${lv.color}">${levelBadgeSVG(lv,30)}<span>${esc(lv.name)}</span></div>
       <div class="pts"><b>${k.points}</b> PTS</div>
@@ -1564,6 +1606,10 @@ function renderHome(){
   renderMeters();
 }
 function avatarInner(k){ return k.avatar?`<img src="${k.avatar}">`:`<span>${esc((k.name||'?').slice(0,1).toUpperCase())}</span>`; }
+// power aura tiers by sectors cleared in CORE::UNLOCK
+function auraInfo(k){ const n=(k.sectorsCompleted||[]).length; const tier=n>=20?4:n>=10?3:n>=5?2:n>=1?1:0; const color=['','#ffb13c','#34e3ff','#a78bfa','#ffd23c'][tier]; return {tier,color}; }
+function auraClass(k){ const a=auraInfo(k); return a.tier?('aura aura-t'+a.tier):''; }
+function applyAura(el,k){ const a=auraInfo(k); el.classList.remove('aura','aura-t1','aura-t2','aura-t3','aura-t4'); if(a.tier){ el.classList.add('aura','aura-t'+a.tier); el.style.setProperty('--ac',a.color); } }
 
 /* ---------- Team meters (min-based; both kids must reach) ---------- */
 function metersData(){
@@ -1607,7 +1653,7 @@ function openKid(id,fromLink){
 function renderKid(){
   const k=state.kids.find(x=>x.id===currentKidId); if(!k){ goHome(); return; }
   $('#kidHead').style.setProperty('--kc',k.color);
-  $('#kvAv').innerHTML=avatarInner(k);
+  const kvAv=$('#kvAv'); kvAv.innerHTML=avatarInner(k); applyAura(kvAv,k);
   $('#kvName').textContent=k.name;
   $('#kvTot').innerHTML='<b>'+k.points+'</b> POINTS';
   $('#kvAvWrap').onclick=openAvatarPicker;
@@ -1625,7 +1671,8 @@ function renderKid(){
   // stats
   $('#kvStats').innerHTML=`
     <div class="stat panel brk"><div class="num">${missionsThisWeek(k)}</div><div class="lab">MISSIONS THIS WEEK</div></div>
-    <div class="stat panel brk"><div class="num">${k.lifetimeMissions||0}</div><div class="lab">TOTAL MISSIONS</div></div>`;
+    <div class="stat panel brk"><div class="num">${k.lifetimeMissions||0}</div><div class="lab">TOTAL MISSIONS</div></div>
+    <div class="stat panel brk"><div class="num">${(k.sectorsCompleted||[]).length}</div><div class="lab">SECTORS CLEARED</div></div>`;
 
   // daily reward (per kid, repeats every N pts; earned badge stays for the day)
   const dr=state.rewards.daily; const intl=Math.max(1,dr.interval||20);
@@ -1639,6 +1686,9 @@ function renderKid(){
 
   // daily note from a grown-up
   renderNoteCard(k);
+  // CORE::UNLOCK play button + daily special project
+  renderPlay(k);
+  renderSpecial(k);
 
   const tg=todayGroup(); const done=k.completions[todayStr()]||[];
   ['morning','evening'].forEach(slotName=>{
@@ -1663,7 +1713,7 @@ function renderSiblings(k){
     others.map(s=>{
       const lv=levelFor(s.points);
       return `<div class="sibcard panel brk" style="--kc:${s.color};--lc:${lv.color}" data-sib="${s.id}">
-        <div class="av" style="--kc:${s.color}">${avatarInner(s)}</div>
+        <div class="av ${auraClass(s)}" style="--kc:${s.color};--ac:${auraInfo(s).color}">${avatarInner(s)}</div>
         <div>
           <div class="sname">SEE HOW <b>${esc(s.name.toUpperCase())}</b> IS DOING — HELP OUT!</div>
           <div class="slv">${levelBadgeSVG(lv,28)} ${esc(lv.name)}</div>
@@ -1688,6 +1738,29 @@ function renderNoteCard(k){
     ${note.reply?'<div class="nsent">Reply sent &#10003;</div>':''}
   </div>`;
   $('#kvReplyBtn').onclick=async()=>{ k.note.reply=$('#kvReply').value.trim(); k.note.seen=true; await Store.save(state); toast('REPLY SENT'); renderNoteCard(k); };
+}
+function renderPlay(k){
+  const el=$('#kvPlay'); const u=k.sectorsUnlocked||0;
+  if(u>=1){
+    el.innerHTML=`<a class="playbtn" href="game.html?kid=${encodeURIComponent(slug(k.name))}">
+      <span class="pbig">&#9654; PLAY CORE::UNLOCK</span>
+      <span class="psub">${Math.min(u,GAME_SECTORS)}/${GAME_SECTORS} SECTORS UNLOCKED · ${(k.sectorsCompleted||[]).length} CLEARED</span></a>`;
+  } else {
+    const need=PTS_PER_SECTOR*(u+1)-(k.lifetimePoints||0);
+    el.innerHTML=`<div class="playbtn locked">
+      <span class="pbig">&#128274; CORE::UNLOCK</span>
+      <span class="psub">${need} MORE POINT${need!==1?'S':''} TO UNLOCK SECTOR 1</span></div>`;
+  }
+}
+function renderSpecial(k){
+  const el=$('#kvSpecial'); const n=(k.sectorsCompleted||[]).length;
+  if(n<1){ el.innerHTML=''; return; }
+  const sp=state.rewards.special||{name:'Special Project',points:5};
+  const done=(k.completions[todayStr()]||[]).includes('special');
+  el.innerHTML=`<div class="sh"><span class="ico">&#9889;</span> SPECIAL PROJECT</div>
+    <div class="chore special panel${done?' done':''}">
+      <div class="box">${done?'&#10003;':''}</div><div class="cname">${esc(sp.name)}</div><div class="cpts">+${sp.points}</div></div>`;
+  el.querySelector('.chore').onclick=()=>toggleChore({id:'special',name:sp.name,points:sp.points,slot:'special',group:'everyday'});
 }
 function showNotePopup(k){
   modal(`<h2>&#9993; MESSAGE FOR ${esc(k.name.toUpperCase())}</h2>
@@ -1717,11 +1790,14 @@ async function toggleChore(chore,el){
   const day=todayStr(); if(!k.completions[day])k.completions[day]=[];
   const arr=k.completions[day]; const idx=arr.indexOf(chore.id); const before=k.points;
   const checking=idx===-1;
-  if(checking){ arr.push(chore.id); k.points+=chore.points; k.lifetimeMissions=(k.lifetimeMissions||0)+1; bumpHistory(k,1); }
-  else { arr.splice(idx,1); k.points=Math.max(0,k.points-chore.points); k.lifetimeMissions=Math.max(0,(k.lifetimeMissions||0)-1); bumpHistory(k,-1); }
+  if(checking){ arr.push(chore.id); k.points+=chore.points; k.lifetimeMissions=(k.lifetimeMissions||0)+1; k.lifetimePoints=(k.lifetimePoints||0)+chore.points; bumpHistory(k,1); }
+  else { arr.splice(idx,1); k.points=Math.max(0,k.points-chore.points); k.lifetimeMissions=Math.max(0,(k.lifetimeMissions||0)-1); k.lifetimePoints=Math.max(0,(k.lifetimePoints||0)-chore.points); bumpHistory(k,-1); }
 
-  let dailyCrossed=false, teamMsg=null;
+  let dailyCrossed=false, teamMsg=null, unlockMsg=null;
   if(checking){
+    // CORE::UNLOCK — every 10 lifetime points unlocks the next sector (high-water, never re-locks)
+    const newU=Math.floor((k.lifetimePoints||0)/PTS_PER_SECTOR);
+    if(newU>(k.sectorsUnlocked||0)){ k.sectorsUnlocked=newU; unlockMsg='SECTOR '+newU+' UNLOCKED — ACCESS GRANTED'; }
     // daily reward: count how many N-pt intervals were crossed; badge stays for today
     const intl=Math.max(1,state.rewards.daily.interval||20);
     const crossed=Math.floor(k.points/intl)-Math.floor(before/intl);
@@ -1738,8 +1814,9 @@ async function toggleChore(chore,el){
   renderKid(); Store.save(state);
 
   if(!checking) return;
-  // one celebration, by priority: team goal > slot clear > 50 > daily reward > 10
+  // one celebration, by priority: team goal > sector unlock > slot clear > 50 > daily reward > 10
   if(teamMsg){ celebrate(teamMsg,true); return; }
+  if(unlockMsg){ celebrate(unlockMsg,true); return; }
   const tg=todayGroup();
   const slotList=state.chores.filter(c=>c.slot===chore.slot && (c.group==='everyday'||c.group===tg));
   if(slotList.length>0 && slotList.every(c=>arr.includes(c.id))){ celebrateSlot(chore.slot); return; }
@@ -1958,12 +2035,16 @@ function renderRewardsAdmin(b){
     <label>Monthly goal — label</label><input type="text" id="moLab" value="${esc(r.monthly.label)}">
     <label>Overarching goal — points (team, never resets)</label><input type="number" min="1" id="oThr" value="${r.overarching.threshold}">
     <label>Overarching goal — label</label><input type="text" id="oLab" value="${esc(r.overarching.label)}">
+    <p class="hint" style="margin-top:14px">Special Project: a daily bonus chore that appears for any kid who has cleared a game sector (has a power aura).</p>
+    <label>Special Project — name</label><input type="text" id="spName" value="${esc((r.special||{}).name||'Special Project')}">
+    <label>Special Project — points</label><input type="number" min="1" id="spPts" value="${(r.special||{}).points||5}">
     <button class="btn full" style="margin-top:16px" id="rSave">SAVE REWARDS</button>`;
   $('#rSave').onclick=async()=>{
     r.daily.interval=Math.max(1,parseInt($('#dInt').value)||20); r.daily.label=$('#dLab').value.trim()||'Daily reward';
     r.weekly.threshold=Math.max(1,parseInt($('#wThr').value)||1); r.weekly.label=$('#wLab').value.trim()||'Weekly reward';
     r.monthly.threshold=Math.max(1,parseInt($('#moThr').value)||1); r.monthly.label=$('#moLab').value.trim()||'Monthly reward';
     r.overarching.threshold=Math.max(1,parseInt($('#oThr').value)||1); r.overarching.label=$('#oLab').value.trim()||'Big reward';
+    r.special={name:$('#spName').value.trim()||'Special Project',points:Math.max(1,parseInt($('#spPts').value)||5)};
     state.overReached = state.kids.length>0 && state.kids.every(k=>k.points>=r.overarching.threshold);
     await Store.save(state); toast('REWARDS SAVED'); renderHome();
   };
@@ -2045,7 +2126,7 @@ function editKid(id){
   $('#kSave').onclick=async()=>{
     const name=$('#kName').value.trim(); if(!name){ toast('NAME REQUIRED'); return; }
     if(id){ const newPts=Math.max(0,parseInt($('#kPts').value)||0); if(newPts!==k.points && !confirm(`Set ${name}'s points to ${newPts}?`))return; Object.assign(k,{name,color:chosenColor,avatar:chosenAvatar,points:newPts}); }
-    else state.kids.push({id:uid(),name,color:chosenColor,avatar:chosenAvatar,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false}});
+    else state.kids.push({id:uid(),name,color:chosenColor,avatar:chosenAvatar,points:0,completions:{},history:{},lifetimeMissions:0,weeklyBase:0,monthlyBase:0,daily:{date:'',count:0},note:{date:'',from:'',reply:'',seen:false},lifetimePoints:0,sectorsUnlocked:0,sectorsCompleted:[],hasCompletedLevel:false});
     await Store.save(state); renderAdmin(); renderHome();
   };
 }

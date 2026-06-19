@@ -68,6 +68,7 @@
   .win-sub{font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-bottom:18px}
   .win-stats{font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:24px;line-height:2;white-space:pre-line}
   .win-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .btn.special{border-color:var(--green);color:var(--green);box-shadow:0 0 14px rgba(0,255,136,0.45);text-shadow:0 0 8px rgba(0,255,136,0.5)}
   #particles{position:fixed;inset:0;pointer-events:none;z-index:150}
 </style>
 </head>
@@ -120,12 +121,22 @@
     <div class="win-stats" id="win-stats"></div>
     <div class="win-btns">
       <button class="btn primary" id="win-next" onclick="nextLevel()" style="font-size:12px;padding:12px 28px;letter-spacing:3px">NEXT SECTOR &#9654;</button>
-      <button class="btn" onclick="closeWin()" style="font-size:12px;padding:12px 28px;letter-spacing:3px">SECTORS</button>
+      <button class="btn" id="win-back" style="font-size:12px;padding:12px 28px;letter-spacing:3px">BACK TO COMMAND CENTRE</button>
     </div>
   </div>
 </div>
 
 <script>
+// On-screen error reporter (iPad has no console) — shows any uncaught error instead of a blank page
+window.addEventListener('error', function(ev){
+  try{
+    var b=document.getElementById('errbar')||document.createElement('div');
+    b.id='errbar';
+    b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#3a0010;color:#ff8aa0;font:12px monospace;padding:10px 12px;white-space:pre-wrap;border-top:1px solid #ff3355';
+    b.textContent='GAME ERROR: '+(ev.message||'')+(ev.filename?(' @'+ev.lineno+':'+ev.colno):'');
+    document.body.appendChild(b);
+  }catch(_){}
+});
 // Legend: # wall, . floor, @ player, $ core, * core on node, + player on node, X node(target)
 const LEVELS = [["#######","#.....#","#.@$X.#","#.....#","#######"],["#######","#X..#.#","#.$@..#","#...$.#","#.X...#","#######"],["########","#......#","#.$..X.#","#.#$#..#","#..X.@.#","#......#","########"],["########","#@.....#","#.$$X..#","#..#X..#","#......#","########"],["########","#..#...#","#.$.$..#","#.XX#..#","#..@...#","########"],["#########","#X..#..X#","#.$...$.#","#...@...#","#.......#","#########"],["########","#......#","#.XX$..#","#.$#...#","#.@.$X.#","#....X.#","########"],["#########","#.......#","#.$$$...#","#.XXX.#.#","#....@..#","#########"],["########","#..X...#","#.#$#..#","#.X$X..#","#.#$#..#","#..@...#","########"],["#########","#@......#","#.$#$#$.#","#.X.X.X.#","#.......#","#########"],["########","#......#","#.$..$.#","#.X##X.#","#.$..@.#","#.X....#","########"],["#########","#...#...#","#.$.X.$.#","#.X.@.X.#","#.$...$.#","#...X...#","#########"],["##########","#........#","#.$$$$...#","#.XXXX.#.#","#....@...#","##########"],["########","#X...X.#","#.$$$..#","#.$....#","#.X.@..#","#X.....#","########"],["#########","#..X.X..#","#.#$#$#.#","#..$.$..#","#..XX...#","#...@...#","#########"],["##########","#@.......#","#.$.$.$..#","#.X.X.X..#","#.$.....+#","#.X......#","##########"],["#########","#...#...#","#.$$.$$.#","#.X..X..#","#.X..X..#","#...@...#","#########"],["##########","#....#...#","#.$$.X.X.#","#.X#.$.#.#","#..@.$...#","#....X...#","##########"],["##########","#........#","#.$.$.$..#","#.X.X.X..#","#.$......#","#.X...@..#","##########"],["##########","#........#","#.$$$$...#","#.XXXX...#","#...@....#","#........#","##########"]];
 const TOTAL = LEVELS.length;
@@ -137,6 +148,9 @@ let TILE = 46;
 const STORE_KEY='levelup_state_v1', REMOTE='/.netlify/functions/state';
 const LOCAL = location.protocol==='file:';
 function slug(s){ return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function specialAvailableForKid(){ if(GUEST||!STATE) return false; const k=findKid(STATE,KID.id)||findKid(STATE,KID.name); if(!k)return false;
+  const done=((k.completions&&k.completions[todayStr()])||[]).includes('special'); return ((k.sectorsCompleted||[]).length>0)&&!done; }
 function fetchT(u,o,ms=3000){ return Promise.race([fetch(u,o),new Promise((_,r)=>setTimeout(()=>r(0),ms))]); }
 function readLocal(){ try{ const raw=localStorage.getItem(STORE_KEY); return {data:raw?JSON.parse(raw):null,remote:false}; }catch(e){ return {data:null,remote:false}; } }
 async function fetchState(){ if(LOCAL) return readLocal();
@@ -189,7 +203,9 @@ function loadLevel(idx){
 }
 function resizeCanvas(){
   const rows=grid.length, cols=grid[0].length;
-  TILE=Math.max(28, Math.min(46, Math.floor(Math.min(window.innerWidth-60, 560)/cols)));
+  const availW=Math.min(window.innerWidth-28, 920);
+  const availH=Math.max(240, window.innerHeight*0.60);
+  TILE=Math.max(34, Math.min(78, Math.floor(Math.min(availW/cols, availH/rows))));
   const c=$('gameCanvas'); c.width=cols*TILE; c.height=rows*TILE; draw();
 }
 
@@ -299,6 +315,13 @@ function showWin(){
   completed.add(currentLevel); buildDots();
   $('win-stats').textContent='MOVES LOGGED: '+moveCount+'\nSECTOR: '+String(currentLevel+1).padStart(2,'0')+' / '+String(TOTAL).padStart(2,'0');
   const n=currentLevel+1; $('win-next').style.display=(n<TOTAL && !isLocked(n))?'':'none';
+  // contextual back button: they've just cleared a sector, so a special project is available unless already used today
+  const wb=$('win-back'); const url=GUEST?'index.html':'index.html?kid='+slug(KID.name);
+  let specialReady=false;
+  if(!GUEST && STATE){ const k=findKid(STATE,KID.id)||findKid(STATE,KID.name); const used=k&&((k.completions&&k.completions[todayStr()])||[]).includes('special'); specialReady=!used; }
+  if(specialReady){ wb.textContent='★ YOU HAVE A SPECIAL PROJECT'; wb.classList.add('special'); }
+  else { wb.textContent='BACK TO COMMAND CENTRE'; wb.classList.remove('special'); }
+  wb.onclick=()=>{ location.href=url; };
   $('win-overlay').classList.add('show'); $('board-wrap').setAttribute('data-status','DECRYPTED');
   launchParticles();
   if(!GUEST && justNew) saveCompletion(currentLevel);

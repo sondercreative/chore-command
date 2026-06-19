@@ -20,7 +20,7 @@
     display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative;padding:14px 10px 30px}
   body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:100}
   body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-  .container{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:620px}
+  .container{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:720px}
   .toprow{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
   .header{text-align:center;flex:1}
   .header .eyebrow{font-size:10px;letter-spacing:6px;color:var(--cyan-dim);text-transform:uppercase;margin-bottom:4px}
@@ -37,7 +37,7 @@
   .progress-label{font-size:9px;letter-spacing:3px;color:var(--text-dim);display:flex;justify-content:space-between}
   .progress-bar{height:6px;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden}
   .progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));box-shadow:0 0 10px rgba(0,212,255,0.8);transition:width 0.4s ease}
-  .board-wrap{border:1px solid var(--border);box-shadow:0 0 0 1px rgba(0,212,255,0.1),0 0 40px rgba(0,212,255,0.05),inset 0 0 40px rgba(0,0,0,0.5);background:var(--panel);padding:12px;position:relative;max-width:100%;overflow:auto}
+  .board-wrap{border:1px solid var(--border);box-shadow:0 0 0 1px rgba(0,212,255,0.1),0 0 40px rgba(0,212,255,0.05),inset 0 0 40px rgba(0,0,0,0.5);background:var(--panel);padding:12px;position:relative;max-width:100%}
   .board-wrap::before{content:'ENCRYPTION NODE';position:absolute;top:-1px;left:12px;font-size:8px;letter-spacing:3px;color:var(--cyan-dim);background:var(--panel);padding:0 6px;transform:translateY(-50%)}
   .board-wrap::after{content:attr(data-status);position:absolute;bottom:-1px;right:12px;font-size:8px;letter-spacing:2px;color:var(--text-dim);background:var(--panel);padding:0 6px;transform:translateY(50%)}
   canvas#gameCanvas{display:block}
@@ -69,6 +69,41 @@
   .win-stats{font-size:12px;letter-spacing:2px;color:var(--green);margin-bottom:24px;line-height:2;white-space:pre-line}
   .win-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
   .btn.special{border-color:var(--green);color:var(--green);box-shadow:0 0 14px rgba(0,255,136,0.45);text-shadow:0 0 8px rgba(0,255,136,0.5)}
+  /* level builder */
+  .builder{position:fixed;inset:0;z-index:300;background:rgba(2,7,12,0.97);display:none;overflow:auto;padding:18px}
+  .builder.show{display:block}
+  .bwrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  .bhead{display:flex;align-items:center;justify-content:space-between}
+  .bhead h2{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:3px;color:var(--cyan);text-shadow:0 0 16px rgba(0,212,255,0.4)}
+  .brow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .blabel{font-size:10px;letter-spacing:2px;color:var(--text-dim)}
+  .builder select,.builder input[type=text]{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;padding:8px}
+  .builder input[type=text]{flex:1;min-width:120px}
+  .palette{display:flex;gap:8px;flex-wrap:wrap}
+  .ptool{display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);color:var(--text-dim);padding:7px 11px;cursor:pointer;font-size:11px;letter-spacing:1px}
+  .ptool .sw{width:14px;height:14px;border:1px solid currentColor}
+  .ptool.on{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,0.3)}
+  .beditor{display:grid;gap:2px;justify-content:center;background:#05101a;padding:8px;border:1px solid var(--border);touch-action:none;width:max-content;max-width:100%;margin:0 auto}
+  .bcell{width:var(--bcs,30px);height:var(--bcs,30px);background:#070f18;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border-radius:2px}
+  .bcell.wall{background:#0a1a28;box-shadow:inset 0 0 0 1px rgba(0,212,255,0.18)}
+  .bcell.op{background:rgba(0,212,255,0.18);color:#00d4ff}
+  .bcell.core{background:rgba(255,170,0,0.16);color:#ffaa00}
+  .bcell.goal{color:#00ff88}
+  .bcell.haz{background:rgba(255,51,85,0.18);color:#ff3355}
+  .bcell.mir{background:rgba(255,51,85,0.3);color:#ff8aa0;box-shadow:inset 0 0 0 1px rgba(255,51,85,0.5)}
+  .bhint{font-size:10px;letter-spacing:1px;color:var(--text-dim);text-align:center}
+  .bhint.err{color:var(--red)} .bhint.ok{color:var(--green)}
+  .bcustom{display:flex;flex-direction:column;gap:8px}
+  .bcustom .clev{display:flex;gap:8px;align-items:center;border:1px solid var(--border);background:var(--panel);padding:8px 10px}
+  .bcustom .clev .cn{flex:1;font-size:12px;color:var(--text)}
+  /* pin gate */
+  .pinmodal{position:fixed;inset:0;z-index:320;background:rgba(2,7,12,0.92);display:none;align-items:center;justify-content:center}
+  .pinmodal.show{display:flex}
+  .pinbox{background:var(--panel);border:1px solid var(--border);padding:24px;text-align:center;min-width:240px}
+  .pinbox h3{font-family:'Orbitron',sans-serif;color:var(--cyan);font-size:15px;letter-spacing:2px;margin-bottom:12px}
+  .pingrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .pingrid button{background:#0a1520;border:1px solid var(--border);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:18px;padding:14px;cursor:pointer}
+  .pindots{letter-spacing:8px;font-size:20px;color:var(--cyan);min-height:24px}
   #particles{position:fixed;inset:0;pointer-events:none;z-index:150}
 </style>
 </head>
@@ -82,7 +117,7 @@
       <h1>CORE::UNLOCK</h1>
       <div class="subtitle" id="subtitle">PUSH ALL DATA CORES TO THE ENCRYPTION NODES</div>
     </div>
-    <span style="width:64px"></span>
+    <button class="btn" id="buildBtn" style="font-size:10px">&#9881; BUILD</button>
   </div>
 
   <div class="statusbar">
@@ -126,6 +161,29 @@
   </div>
 </div>
 
+<div class="builder" id="builder">
+  <div class="bwrap">
+    <div class="bhead">
+      <h2>LEVEL BUILDER</h2>
+      <button class="btn" id="bClose">CLOSE</button>
+    </div>
+    <div class="brow">
+      <span class="blabel">SIZE</span>
+      <select id="bW"></select><span style="color:var(--text-dim)">x</span><select id="bH"></select>
+      <button class="btn" id="bNew">NEW GRID</button>
+      <button class="btn" id="bDir">HAZARD &#8596;</button>
+    </div>
+    <div class="palette" id="palette"></div>
+    <div class="beditor" id="beditor"></div>
+    <div class="brow">
+      <input type="text" id="bName" placeholder="Level name…" maxlength="24">
+      <button class="btn primary" id="bSave">SAVE LEVEL</button>
+    </div>
+    <div class="bhint" id="bHint">Tap or drag to paint. Need 1 operator, and equal cores &amp; nodes.</div>
+    <div class="bcustom" id="bCustom"></div>
+  </div>
+</div>
+
 <script>
 // On-screen error reporter (iPad has no console) — shows any uncaught error instead of a blank page
 window.addEventListener('error', function(ev){
@@ -138,8 +196,18 @@ window.addEventListener('error', function(ev){
   }catch(_){}
 });
 // Legend: # wall, . floor, @ player, $ core, * core on node, + player on node, X node(target)
-const LEVELS = [["#######","#.....#","#.@$X.#","#.....#","#######"],["#######","#X..#.#","#.$@..#","#...$.#","#.X...#","#######"],["########","#......#","#.$..X.#","#.#$#..#","#..X.@.#","#......#","########"],["########","#@.....#","#.$$X..#","#..#X..#","#......#","########"],["########","#..#...#","#.$.$..#","#.XX#..#","#..@...#","########"],["#########","#X..#..X#","#.$...$.#","#...@...#","#.......#","#########"],["########","#......#","#.XX$..#","#.$#...#","#.@.$X.#","#....X.#","########"],["#########","#.......#","#.$$$...#","#.XXX.#.#","#....@..#","#########"],["########","#..X...#","#.#$#..#","#.X$X..#","#.#$#..#","#..@...#","########"],["#########","#@......#","#.$#$#$.#","#.X.X.X.#","#.......#","#########"],["########","#......#","#.$..$.#","#.X##X.#","#.$..@.#","#.X....#","########"],["#########","#...#...#","#.$.X.$.#","#.X.@.X.#","#.$...$.#","#...X...#","#########"],["##########","#........#","#.$$$$...#","#.XXXX.#.#","#....@...#","##########"],["########","#X...X.#","#.$$$..#","#.$....#","#.X.@..#","#X.....#","########"],["#########","#..X.X..#","#.#$#$#.#","#..$.$..#","#..XX...#","#...@...#","#########"],["##########","#@.......#","#.$.$.$..#","#.X.X.X..#","#.$.....+#","#.X......#","##########"],["#########","#...#...#","#.$$.$$.#","#.X..X..#","#.X..X..#","#...@...#","#########"],["##########","#....#...#","#.$$.X.X.#","#.X#.$.#.#","#..@.$...#","#....X...#","##########"],["##########","#........#","#.$.$.$..#","#.X.X.X..#","#.$......#","#.X...@..#","##########"],["##########","#........#","#.$$$$...#","#.XXXX...#","#...@....#","#........#","##########"]];
-const TOTAL = LEVELS.length;
+const BUILTIN = [["#######","#.....#","#.@$X.#","#.....#","#######"],["#######","#X..#.#","#.$@..#","#...$.#","#.X...#","#######"],["########","#......#","#.$..X.#","#.#$#..#","#..X.@.#","#......#","########"],["########","#@.....#","#.$$X..#","#..#X..#","#......#","########"],["########","#..#...#","#.$.$..#","#.XX#..#","#..@...#","########"],["#########","#X..#..X#","#.$...$.#","#...@...#","#.......#","#########"],["########","#......#","#.XX$..#","#.$#...#","#.@.$X.#","#....X.#","########"],["#########","#.......#","#.$$$...#","#.XXX.#.#","#....@..#","#########"],["########","#..X...#","#.#$#..#","#.X$X..#","#.#$#..#","#..@...#","########"],["#########","#@......#","#.$#$#$.#","#.X.X.X.#","#.......#","#########"],["########","#......#","#.$..$.#","#.X##X.#","#.$..@.#","#.X....#","########"],["#########","#...#...#","#.$.X.$.#","#.X.@.X.#","#.$...$.#","#...X...#","#########"],["##########","#........#","#.$$$$...#","#.XXXX.#.#","#....@...#","##########"],["########","#X...X.#","#.$$$..#","#.$....#","#.X.@..#","#X.....#","########"],["#########","#..X.X..#","#.#$#$#.#","#..$.$..#","#..XX...#","#...@...#","#########"],["##########","#@.......#","#.$.$.$..#","#.X.X.X..#","#.$.....+#","#.X......#","##########"],["#########","#...#...#","#.$$.$$.#","#.X..X..#","#.X..X..#","#...@...#","#########"],["##########","#....#...#","#.$$.X.X.#","#.X#.$.#.#","#..@.$...#","#....X...#","##########"],["##########","#........#","#.$.$.$..#","#.X.X.X..#","#.$......#","#.X...@..#","##########"],["##########","#........#","#.$$$$...#","#.XXXX...#","#...@....#","#........#","##########"]];
+// LEVELS unified as {rows, hazards, mirrors, name}.
+// OVERRIDES: edits to built-in sectors (index -> level). CUSTOM: appended sectors (21+).
+let CUSTOM = [], OVERRIDES = {};
+let LEVELS = [];
+function normLevel(o,fallbackRows){ return {rows:(o&&o.rows)||fallbackRows||[],hazards:(o&&o.hazards)||[],mirrors:(o&&o.mirrors)||[],name:(o&&o.name)||''}; }
+function rebuildLevels(){
+  LEVELS = BUILTIN.map((rows,i)=> OVERRIDES[i] ? normLevel(OVERRIDES[i]) : normLevel(null,rows))
+    .concat((CUSTOM||[]).map(c=>normLevel(c)));
+  TOTAL = LEVELS.length;
+}
+let TOTAL = BUILTIN.length;
 const PTS_PER_SECTOR = 10;
 const WALL='#',FLOOR='.',PLAYER='@',CRATE='$',TARGET='X',CRATE_ON='*',PLAYER_ON='+';
 let TILE = 46;
@@ -157,16 +225,88 @@ async function fetchState(){ if(LOCAL) return readLocal();
   try{ const r=await fetchT(REMOTE,{cache:'no-store'}); if(r&&r.ok){ const d=await r.json(); if(d){ try{localStorage.setItem(STORE_KEY,JSON.stringify(d));}catch(_){} return {data:d,remote:true}; } return {data:null,remote:true}; } }catch(e){}
   return readLocal(); }
 function findKid(st,q){ if(!st||!st.kids)return null; return st.kids.find(k=>k.id===q)||st.kids.find(k=>slug(k.name)===slug(q)); }
+// custom levels + built-in overrides live in a SEPARATE blob ('levels') so the chore-app state is never touched
+const LEVELS_KEY='levelup_levels_v1';
+async function fetchLevelsRaw(){
+  if(!LOCAL){ try{ const r=await fetchT(REMOTE+'?store=levels',{cache:'no-store'}); if(r&&r.ok){ const d=await r.json(); try{localStorage.setItem(LEVELS_KEY,JSON.stringify(d));}catch(_){} return d; } }catch(e){} }
+  try{ const raw=localStorage.getItem(LEVELS_KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+}
+function applyLevels(raw){
+  if(Array.isArray(raw)){ CUSTOM=raw; OVERRIDES={}; }              // legacy: plain array = custom only
+  else if(raw && typeof raw==='object'){ CUSTOM=Array.isArray(raw.custom)?raw.custom:[]; OVERRIDES=raw.overrides||{}; }
+  else { CUSTOM=[]; OVERRIDES={}; }
+}
+async function saveLevels(){
+  const payload={overrides:OVERRIDES, custom:CUSTOM};
+  try{ localStorage.setItem(LEVELS_KEY,JSON.stringify(payload)); }catch(e){}
+  if(!LOCAL){ try{ await fetch(REMOTE+'?store=levels',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); }catch(e){} }
+}
 
 /* ---------- state ---------- */
 let STATE=null, REMOTE_OK=false, KID=null, KIDQ=new URLSearchParams(location.search).get('kid');
 let unlocked=TOTAL, completed=new Set(), GUEST=true;
 let currentLevel=0, grid=[], playerPos={x:0,y:0}, moveCount=0, history=[], particles=[];
+let curHaz=[]; // active hazards for the current level
+let curMir=[]; // active mirror enemies (move opposite to the player)
+function initMirrors(defs){ return (defs||[]).map(m=>({x:m.x,y:m.y})); }
+function mirAt(x,y){ return curMir.some(m=>m.x===x&&m.y===y); }
+let hazGrace=0; // ms timestamp: ignore hazard collisions briefly after (re)load
+const HAZ_SPEED=2.4; // cells per second (slow ping-pong)
+function initHazards(defs){
+  if(!defs||!defs.length||!grid.length) return [];
+  return defs.map(h=>{
+    const horiz=h.dir!=='v'; let lo,hi;
+    if(horiz){ let x=h.x; while(x-1>=0 && grid[h.y][x-1]!=='#') x--; lo=x; x=h.x; while(x+1<grid[h.y].length && grid[h.y][x+1]!=='#') x++; hi=x; }
+    else { let y=h.y; while(y-1>=0 && grid[y-1] && grid[y-1][h.x]!=='#') y--; lo=y; y=h.y; while(y+1<grid.length && grid[y+1][h.x]!=='#') y++; hi=y; }
+    return {dir:horiz?'h':'v', fixed:horiz?h.y:h.x, pos:horiz?h.x:h.y, lo, hi, vel:1, speed:HAZ_SPEED};
+  });
+}
+function updateHazards(dt){
+  const grace = performance.now()-hazGrace < 600;
+  for(const h of curHaz){
+    if(h.hi>h.lo){ h.pos += h.vel*h.speed*dt; if(h.pos<=h.lo){h.pos=h.lo;h.vel=1;} else if(h.pos>=h.hi){h.pos=h.hi;h.vel=-1;} }
+    if(grace) continue;
+    const cx=h.dir==='h'?Math.round(h.pos):h.fixed, cy=h.dir==='h'?h.fixed:Math.round(h.pos);
+    if(cx===playerPos.x && cy===playerPos.y){ hazardHit(); return; }
+  }
+}
+function hazardHit(){ setLog('[ ⚡ ELECTROCUTED — SECTOR RESET ]','warn'); spawnLock(playerPos.x,playerPos.y); loadLevel(currentLevel); }
+function drawMirror(ctx, px, py){
+  const m=4;
+  ctx.save();
+  ctx.fillStyle='rgba(255,51,85,0.16)'; ctx.fillRect(px+m,py+m,TILE-m*2,TILE-m*2);
+  ctx.strokeStyle='#ff3355'; ctx.lineWidth=2; ctx.shadowColor='#ff3355'; ctx.shadowBlur=10;
+  ctx.strokeRect(px+m,py+m,TILE-m*2,TILE-m*2);
+  ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,138,160,0.7)'; ctx.lineWidth=1;
+  ctx.strokeRect(px+m+4,py+m+4,TILE-m*2-8,TILE-m*2-8);
+  // mirror glyph
+  ctx.fillStyle='#ff8aa0'; ctx.font='bold '+Math.round(TILE*0.32)+'px "Share Tech Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⇄', px+TILE/2, py+TILE/2+1);
+  ctx.restore();
+}
+function drawHazardCell(ctx, px, py){
+  const cx=px+TILE/2, cy=py+TILE/2, t=Date.now()/120;
+  ctx.save();
+  ctx.fillStyle='rgba(255,51,85,0.12)'; ctx.fillRect(px+3,py+3,TILE-6,TILE-6);
+  ctx.shadowColor='#ff3355'; ctx.shadowBlur=14; ctx.strokeStyle='#ff5577'; ctx.lineWidth=2;
+  ctx.beginPath();
+  let x=px+6, y=py+TILE/2;
+  ctx.moveTo(x,y);
+  for(let i=0;i<5;i++){ x+=(TILE-12)/5; ctx.lineTo(x, py+TILE/2+(Math.random()*2-1)*(TILE*0.28)); }
+  ctx.stroke();
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=1; ctx.shadowBlur=6;
+  ctx.beginPath(); let x2=px+TILE/2, y2=py+6;
+  ctx.moveTo(x2,y2); for(let i=0;i<5;i++){ y2+=(TILE-12)/5; ctx.lineTo(px+TILE/2+(Math.random()*2-1)*(TILE*0.28), y2); }
+  ctx.stroke();
+  ctx.restore();
+}
 
 const $=id=>document.getElementById(id);
 
 (async function init(){
+  rebuildLevels();                       // builtin first so LEVELS is never empty
   const {data,remote}=await fetchState(); STATE=data; REMOTE_OK=remote;
+  applyLevels(await fetchLevelsRaw()); rebuildLevels();   // built-in overrides + appended custom
   if(KIDQ && STATE) KID=findKid(STATE,KIDQ);
   if(KID){
     GUEST=false;
@@ -194,7 +334,8 @@ function isLocked(i){ return !GUEST && i>=unlocked; }
 /* ---------- level ---------- */
 function loadLevel(idx){
   if(isLocked(idx)){ setLog('[ SECTOR '+String(idx+1).padStart(2,'0')+' LOCKED — '+((idx+1)*PTS_PER_SECTOR)+' LIFETIME PTS NEEDED ]','warn'); return; }
-  currentLevel=idx; grid=LEVELS[idx].map(r=>r.split('')); history=[]; moveCount=0;
+  currentLevel=idx; const L=LEVELS[idx]; grid=L.rows.map(r=>r.split('')); history=[]; moveCount=0;
+  curHaz=initHazards(L.hazards); hazGrace=performance.now(); curMir=initMirrors(L.mirrors);
   for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===PLAYER||grid[y][x]===PLAYER_ON) playerPos={x,y}; }
   resizeCanvas(); updateUI(); buildDots();
   setLog('[ SECTOR '+String(idx+1).padStart(2,'0')+' — OPERATIVE DEPLOYED ]','');
@@ -203,9 +344,11 @@ function loadLevel(idx){
 }
 function resizeCanvas(){
   const rows=grid.length, cols=grid[0].length;
-  const availW=Math.min(window.innerWidth-28, 920);
-  const availH=Math.max(240, window.innerHeight*0.60);
-  TILE=Math.max(34, Math.min(78, Math.floor(Math.min(availW/cols, availH/rows))));
+  const wrap=$('board-wrap'), cont=wrap&&wrap.parentElement;
+  // fit the container's available width (the wrap shrinks to content, so measure its parent) + viewport height
+  const availW=((cont&&cont.clientWidth) ? cont.clientWidth : Math.min(window.innerWidth,720)) - 30;
+  const availH=Math.max(200, window.innerHeight*0.58);
+  TILE=Math.max(16, Math.min(64, Math.floor(Math.min(availW/cols, availH/rows))));
   const c=$('gameCanvas'); c.width=cols*TILE; c.height=rows*TILE; draw();
 }
 
@@ -226,6 +369,10 @@ function draw(){
   ctx.strokeStyle='rgba(0,212,255,0.04)'; ctx.lineWidth=1;
   for(let y=0;y<=rows;y++){ ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(cols*TILE,y*TILE); ctx.stroke(); }
   for(let x=0;x<=cols;x++){ ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,rows*TILE); ctx.stroke(); }
+  // mirrors (solid blocks)
+  for(const m of curMir){ drawMirror(ctx, m.x*TILE, m.y*TILE); }
+  // hazards (drawn on top, at interpolated position)
+  for(const h of curHaz){ const fx=(h.dir==='h'?h.pos:h.fixed)*TILE, fy=(h.dir==='h'?h.fixed:h.pos)*TILE; drawHazardCell(ctx,fx,fy); }
 }
 function drawWall(ctx,x,y){ ctx.fillStyle='#0a1a28'; ctx.fillRect(x,y,TILE,TILE);
   ctx.strokeStyle='rgba(0,212,255,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
@@ -263,21 +410,33 @@ function move(dx,dy){
   const nx=playerPos.x+dx, ny=playerPos.y+dy, rows=grid.length, cols=grid[0].length;
   if(ny<0||ny>=rows||nx<0||nx>=cols) return;
   const target=grid[ny][nx]; if(target===WALL) return;
+  if(mirAt(nx,ny)) return;                                  // mirror is solid — can't pass
   const snap=grid.map(r=>[...r]);
   if(target===CRATE||target===CRATE_ON){
     const bx=nx+dx,by=ny+dy; if(by<0||by>=rows||bx<0||bx>=cols) return;
-    const beyond=grid[by][bx]; if(beyond===WALL||beyond===CRATE||beyond===CRATE_ON) return;
+    const beyond=grid[by][bx]; if(beyond===WALL||beyond===CRATE||beyond===CRATE_ON||mirAt(bx,by)) return;  // can't push a core into a mirror
     const wasOn=target===CRATE_ON; grid[by][bx]=beyond===TARGET?CRATE_ON:CRATE; grid[ny][nx]=wasOn?TARGET:FLOOR;
     if(grid[by][bx]===CRATE_ON) spawnLock(bx,by);
   }
   const wasOn=grid[playerPos.y][playerPos.x]===PLAYER_ON;
   grid[playerPos.y][playerPos.x]=wasOn?TARGET:FLOOR;
   grid[ny][nx]=(grid[ny][nx]===TARGET)?PLAYER_ON:PLAYER;
-  playerPos={x:nx,y:ny}; history.push({grid:snap}); moveCount++;
+  playerPos={x:nx,y:ny};
+  history.push({grid:snap, mir:curMir.map(m=>({x:m.x,y:m.y}))}); moveCount++;
+  // mirrors copy the move, inverted — each moves opposite, blocked by walls/cores/mirrors/player/edges
+  for(const m of curMir){
+    const tx=m.x-dx, ty=m.y-dy;
+    if(tx<0||ty<0||tx>=cols||ty>=rows) continue;
+    const t=grid[ty][tx];
+    if(t===WALL||t===CRATE||t===CRATE_ON) continue;
+    if(tx===playerPos.x && ty===playerPos.y) continue;
+    if(curMir.some(o=>o!==m && o.x===tx && o.y===ty)) continue;
+    m.x=tx; m.y=ty;
+  }
   draw(); updateUI();
   if(checkWin()) setTimeout(showWin,380);
 }
-function undoMove(){ if(!history.length) return; grid=history.pop().grid.map(r=>[...r]);
+function undoMove(){ if(!history.length) return; const prev=history.pop(); grid=prev.grid.map(r=>[...r]); curMir=(prev.mir||[]).map(m=>({x:m.x,y:m.y}));
   for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===PLAYER||grid[y][x]===PLAYER_ON) playerPos={x,y}; }
   draw(); updateUI(); setLog('[ MOVE REVERSED ]','warn'); }
 function checkWin(){ for(let y=0;y<grid.length;y++)for(let x=0;x<grid[y].length;x++){ if(grid[y][x]===CRATE) return false; } return true; }
@@ -345,7 +504,15 @@ function launchParticles(){ const cols=['#00d4ff','#00ff88','#ffaa00','#ff3355',
 function animParticles(){ const c=$('particles'),ctx=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight; ctx.clearRect(0,0,c.width,c.height);
   particles=particles.filter(p=>p.life>0); particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life-=0.02; ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=6; ctx.fillRect(p.x,p.y,p.size,p.size); });
   ctx.globalAlpha=1; ctx.shadowBlur=0; requestAnimationFrame(animParticles); }
-function gameLoop(){ if(grid.length) draw(); requestAnimationFrame(gameLoop); }
+let _lastT=0;
+function gameLoop(t){
+  const dt=_lastT?Math.min(0.05,((t||0)-_lastT)/1000):0; _lastT=t||0;
+  if(grid.length){
+    if(curHaz.length && !$('win-overlay').classList.contains('show') && !$('builder').classList.contains('show')) updateHazards(dt);
+    draw();
+  }
+  requestAnimationFrame(gameLoop);
+}
 
 /* ---------- input ---------- */
 const keyMap={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],W:[0,-1],S:[0,1],A:[-1,0],D:[1,0]};
@@ -358,6 +525,141 @@ const bw=$('board-wrap');
 bw.addEventListener('touchstart',e=>{ ts=e.touches[0]; },{passive:true});
 bw.addEventListener('touchend',e=>{ if(!ts)return; const dx=e.changedTouches[0].clientX-ts.clientX,dy=e.changedTouches[0].clientY-ts.clientY;
   if(Math.max(Math.abs(dx),Math.abs(dy))<20){ts=null;return;} if(Math.abs(dx)>Math.abs(dy)) move(dx>0?1:-1,0); else move(0,dy>0?1:-1); ts=null; },{passive:true});
+
+/* ============================================================
+   LEVEL BUILDER (admin) — PIN gated, saves to the separate 'levels' blob
+   ============================================================ */
+async function hashPin(pin){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode('levelup:'+pin)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+const TOOLS=[{c:'.',name:'Erase',cls:''},{c:'#',name:'Wall',cls:'wall'},{c:'@',name:'Operator',cls:'op'},{c:'$',name:'Core',cls:'core'},{c:'X',name:'Node',cls:'goal'},{c:'haz',name:'Hazard',cls:'haz'},{c:'mir',name:'Mirror',cls:'mir'}];
+let bgrid=[], bw_=9, bh_=7, btool='#', bEditIdx=-1, bdir='h', bhaz=[], bmir=[];
+
+$('buildBtn').onclick=()=>pinGate(openBuilder);
+
+function pinGate(ok){
+  const pin=(STATE&&STATE.pinHash)||null;
+  if(!pin){ ok(); return; }                 // no PIN set in the app -> allow
+  let buf='';
+  let m=$('pinmodal'); if(!m){ m=document.createElement('div'); m.id='pinmodal'; m.className='pinmodal'; document.body.appendChild(m); }
+  m.innerHTML='<div class="pinbox"><h3>ADMIN PIN</h3><div class="pindots" id="pd"></div><div class="pingrid">'+
+    [1,2,3,4,5,6,7,8,9].map(n=>'<button data-n="'+n+'">'+n+'</button>').join('')+
+    '<button data-x="1">⌫</button><button data-n="0">0</button><button data-c="1">ESC</button></div></div>';
+  m.classList.add('show');
+  const draw=()=>{ $('pd').textContent='●'.repeat(buf.length)+'○'.repeat(Math.max(0,4-buf.length)); };
+  draw();
+  m.querySelectorAll('[data-n]').forEach(b=>b.onclick=async()=>{ if(buf.length>=4)return; buf+=b.dataset.n; draw();
+    if(buf.length===4){ const h=await hashPin(buf); if(h===pin){ m.classList.remove('show'); ok(); } else { buf=''; draw(); $('pd').textContent='WRONG'; } } });
+  m.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ buf=buf.slice(0,-1); draw(); });
+  m.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ m.classList.remove('show'); });
+}
+
+function fillSizeSelectors(){
+  const wsel=$('bW'), hsel=$('bH'); if(wsel.options.length) return;
+  for(let i=5;i<=12;i++){ wsel.add(new Option(i,i)); hsel.add(new Option(i,i)); }
+  wsel.value=bw_; hsel.value=bh_;
+}
+function newGrid(w,h){
+  bw_=w; bh_=h; bgrid=[]; bhaz=[]; bmir=[];
+  for(let y=0;y<h;y++){ const row=[]; for(let x=0;x<w;x++){ row.push((x===0||y===0||x===w-1||y===h-1)?'#':'.'); } bgrid.push(row); }
+  bgrid[Math.floor(h/2)][Math.floor(w/2)]='@';
+}
+function openBuilder(){
+  $('builder').classList.add('show');
+  fillSizeSelectors();
+  if(!bgrid.length) newGrid(bw_,bh_);
+  renderPalette(); renderEditor(); renderLevelList(); $('bName').value=''; bEditIdx=-1; setHint('');
+}
+function closeBuilder(){ $('builder').classList.remove('show'); }
+$('bClose').onclick=closeBuilder;
+$('bNew').onclick=()=>{ newGrid(+$('bW').value, +$('bH').value); bEditIdx=-1; $('bName').value=''; renderEditor(); setHint(''); };
+$('bDir').onclick=()=>{ bdir=bdir==='h'?'v':'h'; $('bDir').innerHTML='HAZARD '+(bdir==='h'?'&#8596;':'&#8597;'); };
+function renderPalette(){
+  $('palette').innerHTML=TOOLS.map(t=>'<div class="ptool'+(t.c===btool?' on':'')+'" data-c="'+t.c+'"><span class="sw '+t.cls+'"></span>'+t.name+'</div>').join('');
+  $('palette').querySelectorAll('[data-c]').forEach(el=>el.onclick=()=>{ btool=el.dataset.c; renderPalette(); });
+}
+function paintCell(x,y){
+  if(x<0||y<0||x>=bw_||y>=bh_) return;
+  if(btool==='haz'){
+    if(bgrid[y][x]==='#') return;                 // no hazard on walls
+    bmir=bmir.filter(m=>!(m.x===x&&m.y===y));      // one entity per cell
+    const i=bhaz.findIndex(h=>h.x===x&&h.y===y);
+    if(i>=0) bhaz.splice(i,1); else bhaz.push({x,y,dir:bdir});
+    renderEditor(); return;
+  }
+  if(btool==='mir'){
+    if(bgrid[y][x]==='#') return;                 // no mirror on walls
+    bhaz=bhaz.filter(h=>!(h.x===x&&h.y===y));
+    const i=bmir.findIndex(m=>m.x===x&&m.y===y);
+    if(i>=0) bmir.splice(i,1); else bmir.push({x,y});
+    renderEditor(); return;
+  }
+  if(btool==='@'){ for(let yy=0;yy<bh_;yy++)for(let xx=0;xx<bw_;xx++) if(bgrid[yy][xx]==='@') bgrid[yy][xx]='.'; }
+  bgrid[y][x]=btool;
+  // a tile char replaces any entity on that cell
+  bhaz=bhaz.filter(h=>!(h.x===x&&h.y===y));
+  bmir=bmir.filter(m=>!(m.x===x&&m.y===y));
+  renderEditor();
+}
+let bpaint=false;
+function renderEditor(){
+  const ed=$('beditor'); const cs=Math.max(22, Math.min(40, Math.floor(Math.min(window.innerWidth-60, 560)/bw_)));
+  ed.style.gridTemplateColumns='repeat('+bw_+','+cs+'px)'; ed.style.setProperty('--bcs',cs+'px'); ed.innerHTML='';
+  for(let y=0;y<bh_;y++)for(let x=0;x<bw_;x++){
+    const c=bgrid[y][x]; const d=document.createElement('div');
+    const hz=bhaz.find(h=>h.x===x&&h.y===y); const mr=bmir.find(m=>m.x===x&&m.y===y);
+    d.className='bcell'+(c==='#'?' wall':c==='@'?' op':c==='$'?' core':c==='X'?' goal':'')+(hz?' haz':'')+(mr?' mir':'');
+    d.textContent = mr?'⇄' : hz?(hz.dir==='h'?'↔':'↕') : (c==='$'?'◆':c==='X'?'◎':c==='@'?'◈':'');
+    d.dataset.x=x; d.dataset.y=y;
+    ed.appendChild(d);
+  }
+}
+$('beditor').addEventListener('pointerdown',e=>{ const t=e.target.closest('.bcell'); if(!t)return; bpaint=true; paintCell(+t.dataset.x,+t.dataset.y); e.preventDefault(); });
+$('beditor').addEventListener('pointermove',e=>{ if(!bpaint)return; const t=document.elementFromPoint(e.clientX,e.clientY); if(t&&t.classList.contains('bcell')) paintCell(+t.dataset.x,+t.dataset.y); });
+window.addEventListener('pointerup',()=>{ bpaint=false; });
+function setHint(msg,type){ const h=$('bHint'); h.textContent=msg||'Tap or drag to paint. Need 1 operator, and equal cores & nodes.'; h.className='bhint'+(type?(' '+type):''); }
+function countCh(ch){ let n=0; for(const r of bgrid)for(const c of r) if(c===ch)n++; return n; }
+$('bSave').onclick=async()=>{
+  const ops=countCh('@'), cores=countCh('$'), goals=countCh('X');
+  if(ops!==1){ setHint('Need exactly 1 operator (you have '+ops+').','err'); return; }
+  if(cores<1){ setHint('Add at least 1 core.','err'); return; }
+  if(cores!==goals){ setHint('Cores ('+cores+') must equal nodes ('+goals+').','err'); return; }
+  const rows=bgrid.map(r=>r.join(''));
+  const haz=bhaz.map(h=>({x:h.x,y:h.y,dir:h.dir})), mir=bmir.map(m=>({x:m.x,y:m.y}));
+  if(bEditIdx>=0 && bEditIdx<BUILTIN.length){
+    OVERRIDES[bEditIdx]={rows,hazards:haz,mirrors:mir,name:($('bName').value.trim()||'')};
+    await saveLevels(); rebuildLevels(); buildDots(); setHint('Saved changes to Sector '+(bEditIdx+1)+' (built-in).','ok');
+  } else {
+    const name=($('bName').value.trim())||('Custom '+(CUSTOM.length+1));
+    const lvl={name,rows,hazards:haz,mirrors:mir}; let ci;
+    if(bEditIdx>=BUILTIN.length){ ci=bEditIdx-BUILTIN.length; CUSTOM[ci]=lvl; }
+    else { CUSTOM.push(lvl); ci=CUSTOM.length-1; bEditIdx=BUILTIN.length+ci; }
+    await saveLevels(); rebuildLevels(); buildDots(); setHint('Saved! Sector '+(BUILTIN.length+ci+1)+'.','ok');
+  }
+  renderLevelList();
+};
+function loadIntoEditor(i){
+  const lv=LEVELS[i]; bw_=lv.rows[0].length; bh_=lv.rows.length;
+  if($('bW').querySelector('option[value="'+bw_+'"]')) $('bW').value=bw_;
+  if($('bH').querySelector('option[value="'+bh_+'"]')) $('bH').value=bh_;
+  bgrid=lv.rows.map(r=>r.split('')); bhaz=(lv.hazards||[]).map(h=>({x:h.x,y:h.y,dir:h.dir||'h'})); bmir=(lv.mirrors||[]).map(m=>({x:m.x,y:m.y}));
+  bEditIdx=i; $('bName').value=(i<BUILTIN.length?'':(lv.name||''));
+  renderEditor(); setHint('Editing Sector '+(i+1)+(i<BUILTIN.length?' (built-in)':'')+'.');
+  $('builder').scrollTop=0;
+}
+function renderLevelList(){
+  const w=$('bCustom'); let html='<div class="blabel" style="margin-top:6px">ALL SECTORS — tap EDIT to modify</div>';
+  for(let i=0;i<TOTAL;i++){
+    const builtin=i<BUILTIN.length;
+    const label=(i+1)+'. '+(builtin?('Sector '+(i+1)+(OVERRIDES[i]?' (edited)':'')):esc(LEVELS[i].name||'Custom'));
+    let btns='<button class="btn" data-edit="'+i+'">EDIT</button>';
+    if(builtin && OVERRIDES[i]) btns+='<button class="btn" data-revert="'+i+'">REVERT</button>';
+    if(!builtin) btns+='<button class="btn" data-del="'+(i-BUILTIN.length)+'">DEL</button>';
+    html+='<div class="clev"><span class="cn">'+label+'</span>'+btns+'</div>';
+  }
+  w.innerHTML=html;
+  w.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>loadIntoEditor(+b.dataset.edit));
+  w.querySelectorAll('[data-revert]').forEach(b=>b.onclick=async()=>{ const i=+b.dataset.revert; if(!confirm('Revert Sector '+(i+1)+' to its original design?'))return; delete OVERRIDES[i]; await saveLevels(); rebuildLevels(); buildDots(); if(bEditIdx===i)bEditIdx=-1; setHint('Reverted Sector '+(i+1)+'.'); renderLevelList(); });
+  w.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ const ci=+b.dataset.del; if(!confirm('Delete this custom sector?'))return; CUSTOM.splice(ci,1); await saveLevels(); rebuildLevels(); buildDots(); bEditIdx=-1; renderLevelList(); });
+}
 </script>
 </body>
 </html>
